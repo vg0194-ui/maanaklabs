@@ -66,7 +66,7 @@ function HeroSection() {
           <div className="grid gap-4 p-6">
             {[
               "Online seed testing request system with multi-sample forms",
-              "Payment workflow with Razorpay-ready placeholder integration",
+              "Payment workflow with Razorpay checkout, signature verification, and webhook support",
               "PDF pack: request letter, sample slips, packing guide, and address label",
               "Admin panel for services, rates, content, requests, and reports",
             ].map((item) => (

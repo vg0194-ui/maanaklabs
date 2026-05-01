@@ -39,7 +39,7 @@ function ReportVerificationPage() {
               value={code}
               onChange={(event) => setCode(event.target.value)}
               className="field"
-              placeholder="Example: ML-REQ-2026-0001-VRF"
+              placeholder="Enter the report verification token"
             />
             <button type="submit" className="btn-primary min-w-40" disabled={loading}>
               {loading ? "Checking..." : "Verify"}
@@ -51,8 +51,6 @@ function ReportVerificationPage() {
               <h3 className="text-xl font-bold">Verification Result</h3>
               <div className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
                 <p>Request Number: {result.requestNumber}</p>
-                <p>Customer: {result.customerName}</p>
-                <p>Company: {result.companyName || "-"}</p>
                 <p>Status: {result.status}</p>
                 <p>Uploaded: {formatDate(result.uploadedAt)}</p>
                 <p>Verification Code: {result.verificationCode}</p>
@@ -66,4 +64,3 @@ function ReportVerificationPage() {
 }
 
 export default ReportVerificationPage;
-

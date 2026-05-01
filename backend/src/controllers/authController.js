@@ -3,6 +3,11 @@ const User = require("../models/User");
 const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../utils/asyncHandler");
 const { signToken } = require("../services/tokenService");
+const {
+  registerFailedAttempt,
+  clearFailedAttempts,
+  getClientIp,
+} = require("../middleware/authSecurityMiddleware");
 
 const register = asyncHandler(async (req, res) => {
   const { name, companyName, mobile, email, gstNumber, billingAddress, password } = req.body;
@@ -49,17 +54,20 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const { identifier, password } = req.body;
+  const clientIp = getClientIp(req);
+  const normalizedIdentifier = (identifier || "").toLowerCase().trim();
 
   if (!identifier || !password) {
     throw new ApiError(400, "Identifier and password are required");
   }
 
-  const lookup = identifier.toLowerCase();
+  const lookup = normalizedIdentifier;
   const user = await User.findOne({
     $or: [{ email: lookup }, { mobile: identifier }],
   });
 
   if (!user || !(await user.comparePassword(password))) {
+    registerFailedAttempt("user", normalizedIdentifier, clientIp);
     throw new ApiError(401, "Invalid credentials");
   }
 
@@ -67,6 +75,7 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Your account is inactive");
   }
 
+  clearFailedAttempts("user", normalizedIdentifier, clientIp);
   const token = signToken(user, "user");
   res.json({
     success: true,
@@ -86,9 +95,12 @@ const login = asyncHandler(async (req, res) => {
 
 const adminLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  const clientIp = getClientIp(req);
+  const normalizedEmail = (email || "").toLowerCase().trim();
 
-  const admin = await Admin.findOne({ email: (email || "").toLowerCase() });
+  const admin = await Admin.findOne({ email: normalizedEmail });
   if (!admin || !(await admin.comparePassword(password))) {
+    registerFailedAttempt("admin", normalizedEmail, clientIp);
     throw new ApiError(401, "Invalid admin credentials");
   }
 
@@ -96,6 +108,7 @@ const adminLogin = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Admin account is inactive");
   }
 
+  clearFailedAttempts("admin", normalizedEmail, clientIp);
   admin.lastLoginAt = new Date();
   await admin.save();
 
@@ -118,4 +131,3 @@ const me = asyncHandler(async (req, res) => {
 });
 
 module.exports = { register, login, adminLogin, me };
-

@@ -4,6 +4,7 @@ const Report = require("../models/Report");
 const TestingRequest = require("../models/TestingRequest");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
+const { generateVerificationToken } = require("../utils/security");
 const uploadReport = asyncHandler(async (req, res) => {
   const request = await TestingRequest.findById(req.params.requestId);
 
@@ -15,7 +16,7 @@ const uploadReport = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Report PDF file is required");
   }
 
-  const verificationCode = `${request.requestNumber}-VRF`;
+  const verificationCode = generateVerificationToken(16);
   const report = await Report.create({
     request: request._id,
     uploadedByAdmin: req.user._id,

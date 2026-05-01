@@ -11,6 +11,7 @@ const Payment = require("../models/Payment");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const slugify = require("../utils/slugify");
+const { sanitizeBlogContent, sanitizePlainText } = require("../utils/blogSanitizer");
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, path.join(__dirname, "..", "..", "uploads", "reports")),
@@ -196,16 +197,26 @@ const listBlogs = asyncHandler(async (_req, res) => {
 const createBlog = asyncHandler(async (req, res) => {
   const blog = await Blog.create({
     ...req.body,
+    title: sanitizePlainText(req.body.title),
+    excerpt: sanitizePlainText(req.body.excerpt),
+    content: sanitizeBlogContent(req.body.content),
     slug: slugify(req.body.slug || req.body.title),
   });
   res.status(201).json({ success: true, blog });
 });
 
 const updateBlog = asyncHandler(async (req, res) => {
+  const payload = {
+    ...req.body,
+    ...(req.body.title ? { title: sanitizePlainText(req.body.title) } : {}),
+    ...(req.body.excerpt ? { excerpt: sanitizePlainText(req.body.excerpt) } : {}),
+    ...(req.body.content ? { content: sanitizeBlogContent(req.body.content) } : {}),
+  };
+
   const blog = await Blog.findByIdAndUpdate(
     req.params.id,
     {
-      ...req.body,
+      ...payload,
       ...(req.body.title ? { slug: slugify(req.body.slug || req.body.title) } : {}),
     },
     { new: true, runValidators: true }

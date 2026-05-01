@@ -15,10 +15,10 @@ Base URL for local backend: `http://localhost:5000/api`
 
 ## Public Website Data
 
-- `GET /public/content` - services, rates, settings, published blogs
+- `GET /public/content` - services, rates, settings, and blog preview cards
 - `GET /public/services/:slug` - single service detail
-- `GET /public/blogs/:slug` - single blog detail
-- `GET /public/report-verification/:code` - verify uploaded report code
+- `GET /public/blogs/:slug` - single sanitized blog detail
+- `GET /public/report-verification/:code` - verify uploaded report token
 - `GET /public/sample-packing-guide.pdf` - downloadable sample packing guide PDF
 
 ## User Request Flow
@@ -29,8 +29,9 @@ Base URL for local backend: `http://localhost:5000/api`
 
 ## Payments
 
-- `POST /payments/create-order` - create placeholder Razorpay order
-- `POST /payments/verify` - mark payment complete in placeholder flow
+- `POST /payments/create-order` - create Razorpay order for a request
+- `POST /payments/verify` - verify Razorpay checkout signature and payment capture status
+- `POST /payments/webhook` - Razorpay webhook endpoint for `payment.captured` / `order.paid`
 
 ## PDFs
 
@@ -75,4 +76,3 @@ Base URL for local backend: `http://localhost:5000/api`
 - `POST /admin/blogs` - create blog
 - `PATCH /admin/blogs/:id` - update blog
 - `DELETE /admin/blogs/:id` - delete blog
-

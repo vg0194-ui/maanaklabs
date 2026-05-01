@@ -3,7 +3,7 @@ import SectionHeader from "../../components/public/SectionHeader";
 const steps = [
   ["Create Request", "Register or login, enter sample details, and select required tests."],
   ["Amount Calculation", "The system calculates request value using active service and rate data."],
-  ["Payment", "Proceed through the placeholder Razorpay-ready flow and confirm payment."],
+  ["Payment", "Proceed through Razorpay checkout and confirm payment with server-side verification."],
   ["PDF Generation", "Download request letter, sample slips, packing guide, and lab address label."],
   ["Dispatch Sample", "Pack carefully and send the sample to Maanak Labs."],
   ["Track Progress", "Monitor request status from Sample Awaited to Completed."],
@@ -38,4 +38,3 @@ function TestingProcessPage() {
 }
 
 export default TestingProcessPage;
-

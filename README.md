@@ -9,7 +9,7 @@ This repository includes:
 - A premium, responsive public website
 - User registration and login
 - Online seed testing request system with multi-sample support
-- Placeholder Razorpay-ready payment flow
+- Razorpay order creation, checkout verification, and webhook-ready payment flow
 - Branded PDF generation for request letter, sample slips, packing guide, and address label
 - Admin dashboard for services, rates, requests, users, content, and blogs
 
@@ -19,7 +19,7 @@ This repository includes:
 - Backend: Node.js, Express
 - Database: MongoDB with Mongoose
 - Auth: JWT with password hashing
-- Payments: Razorpay placeholder integration
+- Payments: Razorpay
 - PDF: `pdf-lib`
 
 ## Key Features
@@ -45,7 +45,7 @@ This repository includes:
 - Auto-generate request numbers like `ML-REQ-2026-0001`
 - Auto-generate sample IDs like `ML-SMP-2026-0001-A`
 - Calculate amounts from active service rates
-- Complete payment in placeholder flow
+- Complete payment through Razorpay
 - Download combined PDF after payment
 - Track request lifecycle online
 - Download final report after admin upload
@@ -62,7 +62,7 @@ This repository includes:
 
 ## Sample Guidance Flow
 
-The section **“How to Withdraw, Pack & Send Seed Samples”** is included on:
+The section **"How to Withdraw, Pack & Send Seed Samples"** is included on:
 
 - Home page
 - Sample Submission Guidelines page
@@ -70,7 +70,7 @@ The section **“How to Withdraw, Pack & Send Seed Samples”** is included on:
 - PDF download page
 - Generated PDF pack
 
-Placeholder images are included at:
+Branded placeholder images are included at:
 
 - `frontend/public/images/sample-withdrawal.jpg`
 - `frontend/public/images/online-request.jpg`
@@ -110,6 +110,7 @@ Reference context used for this wording:
 │   └── .env.example
 ├── API_ROUTES.md
 ├── DATABASE_SCHEMA.md
+├── PRE_LAUNCH_CHECKLIST.md
 └── README.md
 ```
 
@@ -150,7 +151,8 @@ Update values for:
 - MongoDB connection string
 - JWT secret
 - Default admin credentials
-- Razorpay keys
+- Razorpay key ID and secret
+- Razorpay webhook secret
 - Backend API URL in frontend env
 
 ### 3. Start development servers
@@ -177,12 +179,18 @@ The backend bootstrap creates an admin from environment values:
 
 ## Payment Integration Note
 
-The current payment flow is a **placeholder scaffold**. Before production launch:
+The backend now:
 
-1. Replace `/api/payments/create-order` with official Razorpay order creation.
-2. Replace `/api/payments/verify` with signature verification using Razorpay docs.
-3. Save gateway transaction metadata and failure events.
-4. Use webhooks for payment confirmation where appropriate.
+1. Creates Razorpay orders on the server.
+2. Verifies checkout signatures on the server.
+3. Confirms captured payments before unlocking paid state.
+4. Accepts webhook confirmation on `/api/payments/webhook`.
+
+For launch, still make sure you:
+
+- Set real live-mode Razorpay credentials.
+- Configure the Razorpay webhook secret.
+- Test `payment.captured` and `order.paid` events against your deployed backend.
 
 ## PDF Output
 
@@ -234,6 +242,7 @@ npm start
 - `DEFAULT_ADMIN_MOBILE`
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
+- `RAZORPAY_WEBHOOK_SECRET`
 - `LAB_CONTACT_MOBILE`
 - `LAB_CONTACT_EMAIL`
 
@@ -249,4 +258,6 @@ npm start
 - The frontend includes simple, mobile-friendly UI with large readable controls.
 - The backend seeds default services, rates, settings, blogs, and the default admin.
 - Final report files are stored in `backend/uploads/reports`.
-- For production, add stronger validation, official payment verification, centralized logging, and cloud file storage.
+- Auth routes now have request throttling and temporary lock protection.
+- Blog HTML is sanitized on write and served through a dedicated detail endpoint.
+- Review [PRE_LAUNCH_CHECKLIST.md](C:/Users/vg019/Documents/Codex/2026-04-29-build-a-professional-full-stack-website/PRE_LAUNCH_CHECKLIST.md) before going live.

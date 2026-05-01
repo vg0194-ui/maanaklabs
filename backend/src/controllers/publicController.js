@@ -7,6 +7,7 @@ const TestingRequest = require("../models/TestingRequest");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const { generatePackingGuidePdf } = require("../services/pdfService");
+const { sanitizeBlogContent } = require("../utils/blogSanitizer");
 
 const getPublicContent = asyncHandler(async (_req, res) => {
   const [services, rates, settings, blogs] = await Promise.all([
@@ -16,7 +17,21 @@ const getPublicContent = asyncHandler(async (_req, res) => {
     Blog.find({ isPublished: true }).sort({ publishedAt: -1 }).lean(),
   ]);
 
-  res.json({ success: true, services, rates, settings, blogs });
+  res.json({
+    success: true,
+    services,
+    rates,
+    settings,
+    blogs: blogs.map((blog) => ({
+      _id: blog._id,
+      title: blog.title,
+      slug: blog.slug,
+      excerpt: blog.excerpt,
+      coverImage: blog.coverImage,
+      tags: blog.tags,
+      publishedAt: blog.publishedAt,
+    })),
+  });
 });
 
 const getServiceBySlug = asyncHandler(async (req, res) => {
@@ -32,7 +47,13 @@ const getBlogBySlug = asyncHandler(async (req, res) => {
   if (!blog) {
     throw new ApiError(404, "Blog not found");
   }
-  res.json({ success: true, blog });
+  res.json({
+    success: true,
+    blog: {
+      ...blog,
+      content: sanitizeBlogContent(blog.content),
+    },
+  });
 });
 
 const verifyReport = asyncHandler(async (req, res) => {
@@ -52,8 +73,6 @@ const verifyReport = asyncHandler(async (req, res) => {
       verificationCode: report.verificationCode,
       uploadedAt: report.createdAt,
       requestNumber: request.requestNumber,
-      customerName: request.contactName || request.user.name,
-      companyName: request.companyName || request.user.companyName,
       status: request.requestStatus,
     },
   });
@@ -74,4 +93,3 @@ module.exports = {
   verifyReport,
   getPackingGuidePdf,
 };
-

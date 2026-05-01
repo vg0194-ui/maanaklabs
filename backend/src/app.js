@@ -13,6 +13,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const pdfRoutes = require("./routes/pdfRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const { handleWebhook } = require("./controllers/paymentController");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(
   })
 );
 app.use(helmet({ crossOriginResourcePolicy: false }));
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), handleWebhook);
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -46,4 +48,3 @@ app.use(notFound);
 app.use(errorHandler);
 
 module.exports = app;
-
