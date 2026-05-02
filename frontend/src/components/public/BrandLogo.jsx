@@ -10,11 +10,11 @@ function BrandLogo({
       <img
         src="/images/maanak-labs-logo.png"
         alt="Maanak Labs logo"
-        className={stacked ? "h-20 w-auto object-contain" : "h-12 w-auto object-contain"}
+        className={stacked ? "h-20 w-auto object-contain" : "h-16 w-auto object-contain"}
       />
       <div>
-        <div className="font-display text-lg font-extrabold text-brand-ink">{siteName}</div>
-        {showTagline ? <div className="text-xs text-slate-500">{tagline}</div> : null}
+        <div className="font-display text-[2rem] font-extrabold leading-none text-brand-ink">{siteName}</div>
+        {showTagline ? <div className="mt-1 text-sm leading-6 text-slate-500">{tagline}</div> : null}
       </div>
     </div>
   );

@@ -11,9 +11,6 @@ const navItems = [
   ["Services", "/services"],
   ["Testing Process", "/testing-process"],
   ["Rate List", "/rate-list"],
-  ["Submission Guidelines", "/sample-guidelines"],
-  ["Report Verification", "/report-verification"],
-  ["Blogs", "/blogs"],
   ["Contact", "/contact"],
 ];
 
@@ -25,7 +22,7 @@ function SiteLayout() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
           <NavLink to="/" className="flex items-center gap-3">
             <BrandLogo
               showTagline={Boolean(settings?.siteTagline)}
@@ -34,13 +31,15 @@ function SiteLayout() {
             />
           </NavLink>
 
-          <nav className="hidden items-center gap-6 lg:flex">
+          <nav className="hidden flex-1 items-center justify-center gap-8 xl:flex">
             {navItems.map(([label, path]) => (
               <NavLink
                 key={path}
                 to={path}
                 className={({ isActive }) =>
-                  `text-sm font-medium ${isActive ? "text-brand-green" : "text-slate-600 hover:text-brand-blue"}`
+                  `text-base font-medium whitespace-nowrap ${
+                    isActive ? "text-brand-green" : "text-slate-600 hover:text-brand-blue"
+                  }`
                 }
               >
                 {label}
@@ -48,7 +47,7 @@ function SiteLayout() {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden items-center gap-3 xl:flex">
             <a href="tel:+919876543210" className="btn-secondary gap-2">
               <PhoneCall className="h-4 w-4" />
               Contact
@@ -75,14 +74,14 @@ function SiteLayout() {
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
-            className="rounded-2xl border border-slate-200 p-3 lg:hidden"
+            className="rounded-2xl border border-slate-200 p-3 xl:hidden"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
         {open && (
-          <div className="border-t border-slate-200 bg-white px-4 py-4 lg:hidden">
+          <div className="border-t border-slate-200 bg-white px-4 py-4 xl:hidden">
             <div className="flex flex-col gap-3">
               {navItems.map(([label, path]) => (
                 <NavLink
