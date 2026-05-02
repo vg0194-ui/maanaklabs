@@ -1,13 +1,23 @@
 const fs = require("fs");
 const path = require("path");
+const bwipjs = require("bwip-js");
+const QRCode = require("qrcode");
 const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
 const dayjs = require("dayjs");
+
+const PAGE_WIDTH = 595;
+const PAGE_HEIGHT = 842;
+const PAGE_MARGIN = 40;
+const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN * 2;
 
 const BRAND = {
   green: rgb(0.07, 0.36, 0.24),
   blue: rgb(0.1, 0.37, 0.63),
   light: rgb(0.95, 0.97, 0.97),
   dark: rgb(0.15, 0.18, 0.2),
+  muted: rgb(0.41, 0.48, 0.56),
+  border: rgb(0.84, 0.88, 0.9),
+  warning: rgb(1, 0.96, 0.92),
   danger: rgb(0.73, 0.23, 0.19),
 };
 
@@ -16,11 +26,80 @@ function getLogoBytes() {
   if (fs.existsSync(logoPath)) {
     return fs.readFileSync(logoPath);
   }
+
   return null;
 }
 
+function formatCurrency(value) {
+  return `INR ${Number(value || 0).toFixed(2)}`;
+}
+
+function safeText(value, fallback = "-") {
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
+  const text = String(value).trim();
+  return text || fallback;
+}
+
+function splitWords(text = "") {
+  return String(text).replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+}
+
+function getWrappedLines(font, text, width, size) {
+  const words = splitWords(text);
+  if (!words.length) {
+    return [""];
+  }
+
+  const lines = [];
+  let line = "";
+
+  words.forEach((word) => {
+    const testLine = line ? `${line} ${word}` : word;
+    if (font.widthOfTextAtSize(testLine, size) <= width || !line) {
+      line = testLine;
+    } else {
+      lines.push(line);
+      line = word;
+    }
+  });
+
+  if (line) {
+    lines.push(line);
+  }
+
+  return lines;
+}
+
+function drawParagraph(page, font, text, x, y, width, size = 10, lineHeight = 14, color = BRAND.dark) {
+  const lines = getWrappedLines(font, text, width, size);
+  let currentY = y;
+
+  lines.forEach((line) => {
+    page.drawText(line, { x, y: currentY, size, font, color });
+    currentY -= lineHeight;
+  });
+
+  return currentY;
+}
+
+function drawLabelValue(page, fonts, label, value, x, y, labelWidth = 110, valueWidth = 150) {
+  page.drawText(label, {
+    x,
+    y,
+    size: 9,
+    font: fonts.bold,
+    color: BRAND.dark,
+  });
+
+  const endY = drawParagraph(page, fonts.regular, safeText(value), x + labelWidth, y, valueWidth, 9, 12, BRAND.dark);
+  return Math.min(y - 14, endY);
+}
+
 function drawHeader(page, fonts, title, subTitle, logoImage) {
-  page.drawRectangle({ x: 0, y: 770, width: 595, height: 72, color: BRAND.green });
+  page.drawRectangle({ x: 0, y: 770, width: PAGE_WIDTH, height: 72, color: BRAND.green });
 
   if (logoImage) {
     page.drawRectangle({ x: 418, y: 780, width: 140, height: 48, color: rgb(1, 1, 1), opacity: 0.98 });
@@ -33,21 +112,21 @@ function drawHeader(page, fonts, title, subTitle, logoImage) {
   }
 
   page.drawText("Maanak Labs", {
-    x: 40,
+    x: PAGE_MARGIN,
     y: 810,
     size: 20,
     font: fonts.bold,
     color: rgb(1, 1, 1),
   });
   page.drawText("A Unit of Entorno Greens Seeds Private Limited", {
-    x: 40,
+    x: PAGE_MARGIN,
     y: 792,
     size: 9,
     font: fonts.regular,
     color: rgb(0.92, 0.98, 0.96),
   });
   page.drawText(title, {
-    x: 40,
+    x: PAGE_MARGIN,
     y: 752,
     size: 16,
     font: fonts.bold,
@@ -56,7 +135,7 @@ function drawHeader(page, fonts, title, subTitle, logoImage) {
 
   if (subTitle) {
     page.drawText(subTitle, {
-      x: 40,
+      x: PAGE_MARGIN,
       y: 736,
       size: 9,
       font: fonts.regular,
@@ -65,278 +144,629 @@ function drawHeader(page, fonts, title, subTitle, logoImage) {
   }
 }
 
-function drawParagraph(page, font, text, x, y, width, size = 10, lineHeight = 14) {
-  const words = text.split(/\s+/);
-  let line = "";
-  let currentY = y;
-
-  words.forEach((word, index) => {
-    const testLine = `${line}${word} `;
-    const testWidth = font.widthOfTextAtSize(testLine, size);
-    if (testWidth > width && line) {
-      page.drawText(line.trim(), { x, y: currentY, size, font, color: BRAND.dark });
-      currentY -= lineHeight;
-      line = `${word} `;
-    } else {
-      line = testLine;
-    }
-
-    if (index === words.length - 1 && line.trim()) {
-      page.drawText(line.trim(), { x, y: currentY, size, font, color: BRAND.dark });
-      currentY -= lineHeight;
-    }
-  });
-
-  return currentY;
+function defaultSettings(settings = {}) {
+  return {
+    siteName: settings.siteName || "Maanak Labs",
+    siteTagline: settings.siteTagline || "A Unit of Entorno Greens Seeds Private Limited",
+    termsAndConditions:
+      settings.termsAndConditions ||
+      "Samples must be representative of the lot. Test timelines begin after receipt of properly packed samples and payment confirmation.",
+    compliance: {
+      scientificProceduresNote:
+        settings.compliance?.scientificProceduresNote ||
+        "The laboratory follows scientific seed testing procedures and internal quality systems.",
+      accreditationStatus:
+        settings.compliance?.accreditationStatus || "Accreditation in process / to be updated.",
+      nablNote:
+        settings.compliance?.nablNote || "NABL accreditation status: to be updated / in process.",
+      iso17025Note:
+        settings.compliance?.iso17025Note || "ISO/IEC 17025 quality-system alignment: to be updated / in process.",
+    },
+    contactDetails: {
+      address: settings.contactDetails?.address || "Lab address to be updated by admin.",
+      mobile: settings.contactDetails?.mobile || "Lab mobile to be updated by admin.",
+      email: settings.contactDetails?.email || "lab@example.com",
+    },
+  };
 }
 
-async function generateCombinedRequestPdf({ request, user, payment, samples, services, settings }) {
-  const pdfDoc = await PDFDocument.create();
-  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const fonts = { regular, bold };
-  const logoBytes = getLogoBytes();
-  const logoImage = logoBytes ? await pdfDoc.embedPng(logoBytes) : null;
-
-  const requestPage = pdfDoc.addPage([595, 842]);
-  drawHeader(requestPage, fonts, "Request Letter", "Seed testing submission summary", logoImage);
-  requestPage.drawRectangle({ x: 40, y: 595, width: 515, height: 120, color: BRAND.light });
-
-  const leftBlock = [
-    `Request No: ${request.requestNumber}`,
-    `Date: ${dayjs(request.createdAt).format("DD MMM YYYY")}`,
-    `Name: ${request.contactName || user.name}`,
-    `Company: ${request.companyName || user.companyName || "-"}`,
-    `Mobile: ${request.contactMobile || user.mobile}`,
-    `Email: ${request.contactEmail || user.email}`,
-    `GST: ${request.gstNumber || user.gstNumber || "-"}`,
-  ];
-
-  leftBlock.forEach((line, index) => {
-    requestPage.drawText(line, {
-      x: 54,
-      y: 690 - index * 16,
-      size: 10,
-      font: regular,
-      color: BRAND.dark,
-    });
+async function createQrPngBuffer(payload) {
+  const dataUrl = await QRCode.toDataURL(payload, {
+    errorCorrectionLevel: "M",
+    margin: 0,
+    width: 256,
+    color: {
+      dark: "#11324A",
+      light: "#FFFFFF",
+    },
   });
 
-  let yPosition = 565;
-  requestPage.drawText("Billing Address", { x: 40, y: yPosition, size: 12, font: bold, color: BRAND.green });
-  yPosition = drawParagraph(
-    requestPage,
-    regular,
-    request.billingAddressText || "Billing address to be completed by the customer.",
-    40,
-    yPosition - 18,
-    510
-  );
+  return Buffer.from(dataUrl.split(",")[1], "base64");
+}
 
-  requestPage.drawText("Sample Summary", {
-    x: 40,
-    y: yPosition - 10,
-    size: 12,
-    font: bold,
-    color: BRAND.green,
+async function createBarcodePngBuffer(text) {
+  return bwipjs.toBuffer({
+    bcid: "code128",
+    text,
+    scale: 2,
+    height: 12,
+    includetext: false,
+    backgroundcolor: "FFFFFF",
+    paddingwidth: 0,
+    paddingheight: 0,
+  });
+}
+
+function addContinuationPage(pdfDoc, fonts, logoImage, title, subTitle) {
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  drawHeader(page, fonts, title, subTitle, logoImage);
+  return page;
+}
+
+function drawSampleCard(page, fonts, sample, index, startY) {
+  const cardHeight = 88;
+  page.drawRectangle({
+    x: PAGE_MARGIN,
+    y: startY - cardHeight,
+    width: CONTENT_WIDTH,
+    height: cardHeight,
+    color: index % 2 === 0 ? rgb(0.98, 0.99, 0.99) : rgb(0.94, 0.97, 0.96),
+    borderColor: BRAND.border,
+    borderWidth: 0.6,
   });
 
-  yPosition -= 34;
-  samples.forEach((sample, index) => {
-    const serviceNames = sample.selectedTestNames.join(", ");
-    requestPage.drawRectangle({
-      x: 40,
-      y: yPosition - 52,
-      width: 515,
-      height: 48,
-      color: index % 2 === 0 ? rgb(0.98, 0.99, 0.99) : rgb(0.94, 0.97, 0.96),
-    });
-    requestPage.drawText(`${index + 1}. ${sample.crop} / ${sample.variety}`, {
-      x: 48,
-      y: yPosition - 18,
-      size: 11,
-      font: bold,
-      color: BRAND.dark,
-    });
-    requestPage.drawText(`Lot: ${sample.lotNumber} | Sample ID: ${sample.sampleId}`, {
-      x: 48,
-      y: yPosition - 34,
-      size: 9,
-      font: regular,
-      color: BRAND.dark,
-    });
-    requestPage.drawText(`Tests: ${serviceNames}`, {
-      x: 280,
-      y: yPosition - 34,
-      size: 8,
-      font: regular,
-      color: BRAND.dark,
-    });
-    yPosition -= 60;
-  });
-
-  requestPage.drawText(`Total Amount Paid: INR ${Number(payment?.amount || request.totalAmount).toFixed(2)}`, {
-    x: 40,
-    y: 110,
-    size: 12,
-    font: bold,
-    color: BRAND.blue,
-  });
-  requestPage.drawText(
-    "Declaration: I confirm that the submitted samples are representative of the lot and the information provided is correct to the best of my knowledge.",
-    {
-      x: 40,
-      y: 88,
-      size: 9,
-      font: regular,
-      color: BRAND.dark,
-      maxWidth: 500,
-      lineHeight: 12,
-    }
-  );
-  requestPage.drawText("Authorized Signature: ____________________", {
-    x: 40,
-    y: 50,
-    size: 10,
-    font: regular,
+  page.drawText(`${index + 1}. ${safeText(sample.crop)} / ${safeText(sample.variety)}`, {
+    x: PAGE_MARGIN + 10,
+    y: startY - 18,
+    size: 11,
+    font: fonts.bold,
     color: BRAND.dark,
   });
 
+  page.drawText(`Sample ID: ${safeText(sample.sampleId)} | Lot No: ${safeText(sample.lotNumber)}`, {
+    x: PAGE_MARGIN + 10,
+    y: startY - 34,
+    size: 9,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+
+  page.drawText(
+    `Lot Qty: ${safeText(sample.lotQuantity)} | Seed Class: ${safeText(sample.seedClass)} | Stage: ${safeText(sample.stage)} | No. of Samples: ${safeText(sample.numberOfSamples)}`,
+    {
+      x: PAGE_MARGIN + 10,
+      y: startY - 48,
+      size: 8.5,
+      font: fonts.regular,
+      color: BRAND.dark,
+    }
+  );
+
+  const testsEndY = drawParagraph(
+    page,
+    fonts.regular,
+    `Tests: ${safeText((sample.selectedTestNames || []).join(", "), "No tests selected")}`,
+    PAGE_MARGIN + 10,
+    startY - 62,
+    410,
+    8.5,
+    11
+  );
+
+  if (sample.remarks) {
+    drawParagraph(page, fonts.regular, `Remarks: ${sample.remarks}`, 330, startY - 18, 205, 8.2, 10);
+  }
+
+  page.drawText(`Estimated Amount: ${formatCurrency(sample.estimatedAmount)}`, {
+    x: 420,
+    y: Math.max(startY - 76, testsEndY - 4),
+    size: 8.5,
+    font: fonts.bold,
+    color: BRAND.blue,
+  });
+
+  return startY - cardHeight - 12;
+}
+
+async function addRequestLetterPages(pdfDoc, fonts, logoImage, requestData) {
+  const { request, user, payment, samples, settings } = requestData;
+  let page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  drawHeader(page, fonts, "Request Letter", "Seed testing submission summary", logoImage);
+
+  page.drawRectangle({ x: PAGE_MARGIN, y: 612, width: 250, height: 108, color: BRAND.light, borderColor: BRAND.border, borderWidth: 0.8 });
+  page.drawRectangle({ x: 305, y: 612, width: 250, height: 108, color: BRAND.light, borderColor: BRAND.border, borderWidth: 0.8 });
+
+  const requestMeta = [
+    ["Request Number", request.requestNumber],
+    ["Date", dayjs(request.createdAt).format("DD MMM YYYY")],
+    ["Payment Status", request.paymentStatus],
+    ["Request Status", request.requestStatus],
+    ["Receipt Number", payment?.receiptNumber || payment?.razorpayPaymentId || "-"],
+    ["Paid On", payment?.paidAt ? dayjs(payment.paidAt).format("DD MMM YYYY, hh:mm A") : "-"],
+  ];
+
+  let leftY = 700;
+  requestMeta.slice(0, 3).forEach(([label, value]) => {
+    leftY = drawLabelValue(page, fonts, label, value, 54, leftY, 84, 145);
+  });
+
+  let rightY = 700;
+  requestMeta.slice(3).forEach(([label, value]) => {
+    rightY = drawLabelValue(page, fonts, label, value, 320, rightY, 90, 135);
+  });
+
+  page.drawText("Applicant Details", {
+    x: PAGE_MARGIN,
+    y: 588,
+    size: 12,
+    font: fonts.bold,
+    color: BRAND.green,
+  });
+  page.drawRectangle({ x: PAGE_MARGIN, y: 498, width: CONTENT_WIDTH, height: 74, color: rgb(0.99, 1, 1), borderColor: BRAND.border, borderWidth: 0.8 });
+
+  const applicantLines = [
+    `Name: ${safeText(request.contactName || user?.name)}`,
+    `Company: ${safeText(request.companyName || user?.companyName)}`,
+    `Mobile: ${safeText(request.contactMobile || user?.mobile)}`,
+    `Email: ${safeText(request.contactEmail || user?.email)}`,
+    `GST Number: ${safeText(request.gstNumber || user?.gstNumber)}`,
+  ];
+
+  applicantLines.forEach((line, index) => {
+    page.drawText(line, {
+      x: 52 + (index > 1 ? 255 : 0),
+      y: 548 - (index % 3) * 16,
+      size: 9.5,
+      font: fonts.regular,
+      color: BRAND.dark,
+    });
+  });
+
+  page.drawText("Billing Address", {
+    x: PAGE_MARGIN,
+    y: 476,
+    size: 12,
+    font: fonts.bold,
+    color: BRAND.green,
+  });
+  page.drawRectangle({ x: PAGE_MARGIN, y: 406, width: CONTENT_WIDTH, height: 56, color: BRAND.light, borderColor: BRAND.border, borderWidth: 0.8 });
+  drawParagraph(page, fonts.regular, safeText(request.billingAddressText, "Billing address to be completed by customer."), 52, 444, 485, 9.5, 12);
+
+  page.drawText("Payment Summary", {
+    x: PAGE_MARGIN,
+    y: 384,
+    size: 12,
+    font: fonts.bold,
+    color: BRAND.green,
+  });
+  page.drawRectangle({ x: PAGE_MARGIN, y: 320, width: CONTENT_WIDTH, height: 52, color: BRAND.light, borderColor: BRAND.border, borderWidth: 0.8 });
+  page.drawText(`Subtotal: ${formatCurrency(request.subtotalAmount)}`, {
+    x: 52,
+    y: 348,
+    size: 9.5,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+  page.drawText(`GST: ${formatCurrency(request.gstAmount)}`, {
+    x: 220,
+    y: 348,
+    size: 9.5,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+  page.drawText(`Total Amount Paid: ${formatCurrency(payment?.amount || request.totalAmount)}`, {
+    x: 360,
+    y: 348,
+    size: 10.5,
+    font: fonts.bold,
+    color: BRAND.blue,
+  });
+
+  if (request.remarks) {
+    page.drawText("Request Remarks", {
+      x: PAGE_MARGIN,
+      y: 300,
+      size: 12,
+      font: fonts.bold,
+      color: BRAND.green,
+    });
+    page.drawRectangle({ x: PAGE_MARGIN, y: 244, width: CONTENT_WIDTH, height: 42, color: rgb(0.99, 1, 1), borderColor: BRAND.border, borderWidth: 0.8 });
+    drawParagraph(page, fonts.regular, request.remarks, 52, 272, 490, 9, 11);
+  }
+
+  let sampleSectionY = request.remarks ? 220 : 298;
+  page.drawText("Sample Details Submitted Online", {
+    x: PAGE_MARGIN,
+    y: sampleSectionY,
+    size: 12,
+    font: fonts.bold,
+    color: BRAND.green,
+  });
+
+  let currentY = sampleSectionY - 18;
   samples.forEach((sample, index) => {
-    const page = pdfDoc.addPage([595, 842]);
+    if (currentY < 160) {
+      page = addContinuationPage(pdfDoc, fonts, logoImage, "Request Letter (Continued)", request.requestNumber);
+      currentY = 720;
+    }
+
+    currentY = drawSampleCard(page, fonts, sample, index, currentY);
+  });
+
+  if (currentY < 165) {
+    page = addContinuationPage(pdfDoc, fonts, logoImage, "Request Letter (Continued)", request.requestNumber);
+    currentY = 720;
+  }
+
+  page.drawText("Declaration", {
+    x: PAGE_MARGIN,
+    y: currentY - 6,
+    size: 12,
+    font: fonts.bold,
+    color: BRAND.green,
+  });
+  currentY = drawParagraph(
+    page,
+    fonts.regular,
+    "I confirm that the submitted samples are representative of the lot, the information furnished in this request is correct to the best of my knowledge, and the samples are packed and labelled according to the Maanak Labs instructions.",
+    PAGE_MARGIN,
+    currentY - 24,
+    CONTENT_WIDTH,
+    9,
+    12
+  );
+
+  currentY = drawParagraph(
+    page,
+    fonts.regular,
+    `${settings.compliance.scientificProceduresNote} Accreditation status: ${settings.compliance.accreditationStatus} ${settings.compliance.nablNote} ${settings.compliance.iso17025Note}`,
+    PAGE_MARGIN,
+    currentY - 6,
+    CONTENT_WIDTH,
+    8.5,
+    11,
+    BRAND.muted
+  );
+
+  page.drawText("Applicant Signature: ____________________", {
+    x: PAGE_MARGIN,
+    y: Math.max(54, currentY - 20),
+    size: 10,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+}
+
+async function addSampleSlipPages(pdfDoc, fonts, logoImage, requestData) {
+  const { request, user, samples } = requestData;
+
+  for (let index = 0; index < samples.length; index += 1) {
+    const sample = samples[index];
+    const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     drawHeader(page, fonts, `Sample Bag Slip ${index + 1}`, "Paste this slip inside/outside the sample bag", logoImage);
-    page.drawRectangle({ x: 50, y: 430, width: 495, height: 260, color: BRAND.light });
-    const lines = [
-      `Request Number: ${request.requestNumber}`,
-      `Sample ID: ${sample.sampleId}`,
-      `Crop: ${sample.crop}`,
-      `Variety: ${sample.variety}`,
-      `Lot Number: ${sample.lotNumber}`,
-      `Seed Class: ${sample.seedClass}`,
-      `Selected Tests: ${sample.selectedTestNames.join(", ")}`,
+
+    page.drawRectangle({ x: 42, y: 470, width: 511, height: 220, color: BRAND.light, borderColor: BRAND.border, borderWidth: 1 });
+    page.drawText(`Request Number: ${safeText(request.requestNumber)}`, {
+      x: 58,
+      y: 664,
+      size: 11,
+      font: fonts.bold,
+      color: BRAND.dark,
+    });
+    page.drawText(`Sample ID: ${safeText(sample.sampleId)}`, {
+      x: 58,
+      y: 642,
+      size: 14,
+      font: fonts.bold,
+      color: BRAND.blue,
+    });
+
+    const detailLines = [
+      `Crop: ${safeText(sample.crop)}`,
+      `Variety: ${safeText(sample.variety)}`,
+      `Lot Number: ${safeText(sample.lotNumber)}`,
+      `Lot Quantity: ${safeText(sample.lotQuantity)}`,
+      `Seed Class: ${safeText(sample.seedClass)}`,
+      `Stage: ${safeText(sample.stage)}`,
+      `No. of Samples: ${safeText(sample.numberOfSamples)}`,
+      `Sender Mobile: ${safeText(request.contactMobile || user?.mobile)}`,
     ];
 
-    lines.forEach((line, lineIndex) => {
+    detailLines.forEach((line, lineIndex) => {
       page.drawText(line, {
-        x: 72,
-        y: 645 - lineIndex * 26,
-        size: 12,
-        font: lineIndex <= 1 ? bold : regular,
+        x: 58,
+        y: 614 - lineIndex * 18,
+        size: 9.5,
+        font: fonts.regular,
         color: BRAND.dark,
       });
     });
 
-    page.drawRectangle({ x: 380, y: 470, width: 120, height: 120, borderColor: BRAND.blue, borderWidth: 1 });
-    page.drawText("QR / Barcode", {
-      x: 405,
-      y: 530,
-      size: 11,
-      font: bold,
+    drawParagraph(
+      page,
+      fonts.regular,
+      `Selected Tests: ${safeText((sample.selectedTestNames || []).join(", "), "No tests selected")}`,
+      58,
+      468,
+      290,
+      9.5,
+      12
+    );
+
+    if (sample.remarks) {
+      drawParagraph(page, fonts.regular, `Remarks: ${sample.remarks}`, 58, 430, 290, 9, 11);
+    }
+
+    const qrPayload = JSON.stringify({
+      requestNumber: request.requestNumber,
+      sampleId: sample.sampleId,
+      crop: sample.crop,
+      variety: sample.variety,
+      lotNumber: sample.lotNumber,
+      seedClass: sample.seedClass,
+      tests: sample.selectedTestNames,
+    });
+
+    const [qrImage, barcodeImage] = await Promise.all([
+      pdfDoc.embedPng(await createQrPngBuffer(qrPayload)),
+      pdfDoc.embedPng(await createBarcodePngBuffer(sample.sampleId)),
+    ]);
+
+    page.drawRectangle({ x: 374, y: 516, width: 152, height: 152, color: rgb(1, 1, 1), borderColor: BRAND.border, borderWidth: 1 });
+    page.drawImage(qrImage, {
+      x: 389,
+      y: 532,
+      width: 122,
+      height: 122,
+    });
+    page.drawText("Scan for sample details", {
+      x: 393,
+      y: 520,
+      size: 8.5,
+      font: fonts.regular,
       color: BRAND.blue,
     });
-    page.drawText("Placeholder", {
-      x: 412,
-      y: 510,
-      size: 9,
-      font: regular,
+
+    page.drawRectangle({ x: 58, y: 378, width: 468, height: 72, color: rgb(1, 1, 1), borderColor: BRAND.border, borderWidth: 1 });
+    page.drawImage(barcodeImage, {
+      x: 82,
+      y: 402,
+      width: 420,
+      height: 24,
+    });
+    page.drawText(sample.sampleId, {
+      x: 221,
+      y: 386,
+      size: 11,
+      font: fonts.bold,
       color: BRAND.dark,
     });
-  });
 
-  const instructionsPage = pdfDoc.addPage([595, 842]);
-  drawHeader(
-    instructionsPage,
-    fonts,
-    "Packing & Dispatch Instructions",
-    "How to Withdraw, Pack & Send Seed Samples",
-    logoImage
-  );
+    page.drawRectangle({ x: 42, y: 318, width: 511, height: 42, color: rgb(0.98, 0.99, 1), borderColor: BRAND.border, borderWidth: 0.8 });
+    drawParagraph(
+      page,
+      fonts.regular,
+      "Paste this slip inside or outside the matching sample bag. Do not mix two samples in one packet. Ensure the Sample ID on the slip matches the packed sample.",
+      58,
+      344,
+      475,
+      9,
+      11
+    );
+  }
+}
+
+async function addPackingInstructionsPage(pdfDoc, fonts, logoImage, settings) {
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  drawHeader(page, fonts, "Packing & Dispatch Instructions", "How to Withdraw, Pack & Send Seed Samples", logoImage);
 
   const steps = [
-    "1. Withdraw Representative Sample: Take seed from different bags or points and mix properly. Do not send only top-layer seed.",
-    "2. Fill Sample Details Online: Login, add crop, variety, lot details and required tests, then complete payment.",
-    "3. Print Sample Slip: Download the generated PDF and print each sample slip.",
-    "4. Pack Each Sample Separately: Use clean packets and attach the correct slip.",
-    "5. Put All Packets in One Master Bag: Keep the request letter inside.",
-    "6. Paste Lab Address Label: Make the label visible and add sender mobile number.",
-    "7. Send by Courier / Transport: Keep tracking safely.",
-    "8. Track Request Status Online: Follow Sample Awaited to Completed updates in your dashboard.",
+    {
+      title: "1. Withdraw Representative Sample",
+      text: "Take seed from different bags or points of the lot and mix properly. Do not send only top-layer seed.",
+    },
+    {
+      title: "2. Fill Sample Details Online",
+      text: "Login, enter crop, variety, lot details, seed class, and required tests. Submit the request and complete payment.",
+    },
+    {
+      title: "3. Print Sample Slip",
+      text: "Download the PDF after payment and print the slip generated for each sample.",
+    },
+    {
+      title: "4. Pack Each Sample Separately",
+      text: "Put each sample in a clean packet or bag, insert or paste the correct sample slip, and seal properly.",
+    },
+    {
+      title: "5. Put All Packets in One Master Bag",
+      text: "If sending multiple samples, place all individual packets in one master bag or carton and keep the request letter inside.",
+    },
+    {
+      title: "6. Paste Lab Address Label",
+      text: "Paste the Maanak Labs address label outside the master bag. Add sender mobile number on the package.",
+    },
+    {
+      title: "7. Send by Courier / Transport",
+      text: "Dispatch by courier, parcel, transport, or personal delivery and keep the tracking receipt safely.",
+    },
+    {
+      title: "8. Track Request Status Online",
+      text: "Track progress from Sample Awaited to Sample Received, Under Testing, Report Generated, and Completed.",
+    },
   ];
 
-  let stepY = 710;
+  let currentY = 710;
   steps.forEach((step, index) => {
-    instructionsPage.drawRectangle({
-      x: 40,
-      y: stepY - 54,
-      width: 515,
-      height: 48,
+    page.drawRectangle({
+      x: PAGE_MARGIN,
+      y: currentY - 62,
+      width: CONTENT_WIDTH,
+      height: 56,
       color: index % 2 === 0 ? rgb(0.95, 0.98, 0.97) : rgb(0.98, 0.99, 1),
+      borderColor: BRAND.border,
+      borderWidth: 0.8,
     });
-    drawParagraph(instructionsPage, regular, step, 52, stepY - 18, 480, 9, 12);
-    stepY -= 62;
+
+    page.drawCircle({ x: 58, y: currentY - 26, size: 14, color: BRAND.green, borderColor: BRAND.green });
+    page.drawText(String(index + 1), {
+      x: 54,
+      y: currentY - 31,
+      size: 10,
+      font: fonts.bold,
+      color: rgb(1, 1, 1),
+    });
+
+    page.drawText(step.title, {
+      x: 82,
+      y: currentY - 20,
+      size: 10.5,
+      font: fonts.bold,
+      color: BRAND.dark,
+    });
+    drawParagraph(page, fonts.regular, step.text, 82, currentY - 34, 450, 8.6, 10);
+
+    currentY -= 68;
   });
 
-  instructionsPage.drawRectangle({ x: 40, y: 116, width: 515, height: 54, color: rgb(1, 0.96, 0.92) });
+  page.drawRectangle({ x: PAGE_MARGIN, y: 92, width: CONTENT_WIDTH, height: 64, color: BRAND.warning, borderColor: rgb(0.92, 0.75, 0.58), borderWidth: 0.8 });
+  page.drawText("Warning", {
+    x: 54,
+    y: 134,
+    size: 11,
+    font: fonts.bold,
+    color: BRAND.danger,
+  });
   drawParagraph(
-    instructionsPage,
-    regular,
-    "Warning: Incorrect packing, missing sample slip, or unmatched Sample ID may delay testing.",
-    52,
-    146,
-    470,
-    10,
-    14
+    page,
+    fonts.regular,
+    "Incorrect packing, missing sample slip, or unmatched Sample ID may delay testing. Ensure that every sample packet and the master bag carry the correct request reference before dispatch.",
+    54,
+    118,
+    485,
+    9,
+    11
   );
 
-  const labelPage = pdfDoc.addPage([595, 842]);
-  drawHeader(labelPage, fonts, "Lab Address Label", "Seed Testing Sample - Handle Carefully", logoImage);
-  labelPage.drawRectangle({ x: 80, y: 290, width: 435, height: 250, color: BRAND.light });
+  drawParagraph(
+    page,
+    fonts.regular,
+    `${settings.compliance.scientificProceduresNote} Accreditation status: ${settings.compliance.accreditationStatus}`,
+    PAGE_MARGIN,
+    72,
+    CONTENT_WIDTH,
+    8.3,
+    10,
+    BRAND.muted
+  );
+}
+
+async function addAddressLabelPage(pdfDoc, fonts, logoImage, requestData) {
+  const { request, user, settings } = requestData;
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  drawHeader(page, fonts, "Lab Address Label", "Seed Testing Sample - Handle Carefully", logoImage);
+
+  page.drawRectangle({ x: 72, y: 274, width: 450, height: 286, color: BRAND.light, borderColor: BRAND.border, borderWidth: 1.2 });
 
   if (logoImage) {
-    labelPage.drawImage(logoImage, {
-      x: 110,
-      y: 485,
-      width: 180,
-      height: 56,
+    page.drawImage(logoImage, {
+      x: 102,
+      y: 496,
+      width: 176,
+      height: 54,
     });
   }
 
-  labelPage.drawText(settings.siteName || "Maanak Labs", {
-    x: 110,
-    y: 454,
+  page.drawText(settings.siteName, {
+    x: 102,
+    y: 460,
     size: 22,
-    font: bold,
+    font: fonts.bold,
     color: BRAND.green,
   });
-  labelPage.drawText(settings.siteTagline || "", {
-    x: 110,
-    y: 430,
+  page.drawText(settings.siteTagline, {
+    x: 102,
+    y: 438,
     size: 10,
-    font: regular,
+    font: fonts.regular,
     color: BRAND.dark,
   });
-  drawParagraph(labelPage, regular, `Address: ${settings.contactDetails.address}`, 110, 394, 350, 11, 16);
-  labelPage.drawText(`Mobile: ${settings.contactDetails.mobile}`, {
-    x: 110,
-    y: 346,
+  drawParagraph(page, fonts.regular, `Address: ${settings.contactDetails.address}`, 102, 398, 300, 11, 16);
+  page.drawText(`Mobile: ${settings.contactDetails.mobile}`, {
+    x: 102,
+    y: 344,
     size: 11,
-    font: regular,
+    font: fonts.regular,
     color: BRAND.dark,
   });
-  labelPage.drawText(`Email: ${settings.contactDetails.email}`, {
-    x: 110,
+  page.drawText(`Email: ${settings.contactDetails.email}`, {
+    x: 102,
     y: 322,
     size: 11,
-    font: regular,
+    font: fonts.regular,
     color: BRAND.dark,
   });
-  labelPage.drawText("Seed Testing Sample - Handle Carefully", {
-    x: 110,
+  page.drawText("Seed Testing Sample - Handle Carefully", {
+    x: 102,
     y: 286,
     size: 13,
-    font: bold,
+    font: fonts.bold,
     color: BRAND.danger,
   });
+
+  page.drawRectangle({ x: 376, y: 330, width: 126, height: 148, color: rgb(1, 1, 1), borderColor: BRAND.border, borderWidth: 1 });
+  page.drawText("Sender Details", {
+    x: 392,
+    y: 456,
+    size: 10,
+    font: fonts.bold,
+    color: BRAND.blue,
+  });
+  page.drawText(`Name: ${safeText(request.contactName || user?.name)}`, {
+    x: 388,
+    y: 430,
+    size: 8.5,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+  page.drawText(`Mobile: ${safeText(request.contactMobile || user?.mobile)}`, {
+    x: 388,
+    y: 414,
+    size: 8.5,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+  page.drawText(`Request No: ${safeText(request.requestNumber)}`, {
+    x: 388,
+    y: 398,
+    size: 8.5,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+  drawParagraph(page, fonts.regular, "Paste this label on the outside of the master bag/carton.", 388, 372, 100, 8, 10, BRAND.muted);
+}
+
+async function generateCombinedRequestPdf({ request, user, payment, samples, settings }) {
+  const pdfDoc = await PDFDocument.create();
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fonts = { regular, bold };
+  const preparedSettings = defaultSettings(settings);
+  const logoBytes = getLogoBytes();
+  const logoImage = logoBytes ? await pdfDoc.embedPng(logoBytes) : null;
+  const sortedSamples = [...samples].sort((left, right) => left.sampleId.localeCompare(right.sampleId));
+
+  const requestData = {
+    request,
+    user,
+    payment,
+    samples: sortedSamples,
+    settings: preparedSettings,
+  };
+
+  await addRequestLetterPages(pdfDoc, fonts, logoImage, requestData);
+  await addSampleSlipPages(pdfDoc, fonts, logoImage, requestData);
+  await addPackingInstructionsPage(pdfDoc, fonts, logoImage, preparedSettings);
+  await addAddressLabelPage(pdfDoc, fonts, logoImage, requestData);
 
   const bytes = await pdfDoc.save();
   return Buffer.from(bytes);
@@ -347,24 +777,20 @@ async function generatePackingGuidePdf({ settings }) {
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const fonts = { regular, bold };
+  const preparedSettings = defaultSettings(settings);
   const logoBytes = getLogoBytes();
   const logoImage = logoBytes ? await pdfDoc.embedPng(logoBytes) : null;
-  const page = pdfDoc.addPage([595, 842]);
 
-  drawHeader(page, fonts, "Sample Packing Guide", "How to Withdraw, Pack & Send Seed Samples", logoImage);
-  const content =
-    "1. Withdraw a representative sample from multiple points. 2. Fill sample details online and complete payment. 3. Print sample slip for each sample. 4. Pack each sample separately in a clean bag. 5. Put all packets in one master bag with the request letter. 6. Paste the lab address label outside. 7. Send by courier, transport, or personal delivery. 8. Track request status online.";
-  drawParagraph(page, regular, content, 40, 700, 515, 12, 18);
-
-  drawParagraph(
-    page,
-    regular,
-    `Warning: Incorrect packing, missing sample slip, or unmatched Sample ID may delay testing.\n\nLab Address:\n${settings.contactDetails.address}\nMobile: ${settings.contactDetails.mobile}\nEmail: ${settings.contactDetails.email}`,
-    40,
-    520,
-    515,
-    11,
-    16
+  await addPackingInstructionsPage(pdfDoc, fonts, logoImage, preparedSettings);
+  await addAddressLabelPage(
+    pdfDoc,
+    fonts,
+    logoImage,
+    {
+      request: { requestNumber: "-", contactName: "", contactMobile: "" },
+      user: {},
+      settings: preparedSettings,
+    }
   );
 
   const bytes = await pdfDoc.save();

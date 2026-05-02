@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { API_URL, apiFetch } from "../../api/client";
+import { API_URL, apiFetch, downloadProtectedFile } from "../../api/client";
 import { useAuth } from "../../contexts/AuthContext";
 import SampleGuideSection from "../../components/public/SampleGuideSection";
 import StatusBadge from "../../components/dashboard/StatusBadge";
@@ -9,6 +9,8 @@ function PdfDownloadPage() {
   const { requestId } = useParams();
   const { token } = useAuth();
   const [requestData, setRequestData] = useState(null);
+  const [message, setMessage] = useState("");
+  const [downloading, setDownloading] = useState("");
 
   useEffect(() => {
     apiFetch(`/requests/${requestId}`, { token })
@@ -20,8 +22,37 @@ function PdfDownloadPage() {
     return <div className="panel p-8">Loading documents...</div>;
   }
 
-  const downloadUrl = `${API_URL}/pdfs/requests/${requestId}/combined`;
-  const reportUrl = `${API_URL}/reports/${requestId}/download`;
+  const downloadCombinedPdf = async () => {
+    setDownloading("combined");
+    setMessage("");
+    try {
+      await downloadProtectedFile(
+        `/pdfs/requests/${requestId}/combined`,
+        token,
+        `${requestData.request.requestNumber}.pdf`
+      );
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setDownloading("");
+    }
+  };
+
+  const downloadFinalReport = async () => {
+    setDownloading("report");
+    setMessage("");
+    try {
+      await downloadProtectedFile(
+        `/reports/${requestId}/download`,
+        token,
+        `${requestData.request.requestNumber}-final-report.pdf`
+      );
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setDownloading("");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -36,16 +67,17 @@ function PdfDownloadPage() {
           <StatusBadge status={requestData.request.requestStatus} />
         </div>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <a href={downloadUrl} target="_blank" rel="noreferrer" className="btn-primary">
-            Download combined PDF
-          </a>
+          <button type="button" onClick={downloadCombinedPdf} className="btn-primary" disabled={downloading === "combined"}>
+            {downloading === "combined" ? "Downloading..." : "Download combined PDF"}
+          </button>
           <a href={`${API_URL}/public/sample-packing-guide.pdf`} target="_blank" rel="noreferrer" className="btn-secondary">
             Packing guide PDF
           </a>
-          <a href={reportUrl} target="_blank" rel="noreferrer" className="btn-secondary">
-            Final report PDF
-          </a>
+          <button type="button" onClick={downloadFinalReport} className="btn-secondary" disabled={downloading === "report"}>
+            {downloading === "report" ? "Downloading..." : "Final report PDF"}
+          </button>
         </div>
+        {message ? <p className="mt-4 text-sm font-medium text-rose-600">{message}</p> : null}
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
           Page 1 contains the request letter, the next pages contain sample slips, and the last pages contain packing
           instructions and the lab address label.
@@ -61,4 +93,3 @@ function PdfDownloadPage() {
 }
 
 export default PdfDownloadPage;
-

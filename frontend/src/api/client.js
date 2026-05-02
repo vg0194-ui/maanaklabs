@@ -37,5 +37,29 @@ export async function uploadFile(path, file, token) {
   return data;
 }
 
-export { API_URL };
+export async function downloadProtectedFile(path, token, fallbackFileName) {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
 
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || "Download failed");
+  }
+
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get("content-disposition") || "";
+  const match = contentDisposition.match(/filename="?([^"]+)"?/i);
+  const fileName = match?.[1] || fallbackFileName;
+  const objectUrl = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
+}
+
+export { API_URL };
