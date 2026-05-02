@@ -7,10 +7,10 @@ const reportSchema = new mongoose.Schema(
     fileName: { type: String, required: true },
     filePath: { type: String, required: true },
     verificationCode: { type: String, required: true, unique: true },
+    reportType: { type: String, enum: ["report", "invoice"], default: "report" },
     status: { type: String, default: "Active" },
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model("Report", reportSchema);
-

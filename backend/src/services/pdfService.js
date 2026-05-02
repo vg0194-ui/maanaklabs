@@ -99,36 +99,40 @@ function drawLabelValue(page, fonts, label, value, x, y, labelWidth = 110, value
 }
 
 function drawHeader(page, fonts, title, subTitle, logoImage) {
-  page.drawRectangle({ x: 0, y: 770, width: PAGE_WIDTH, height: 72, color: BRAND.green });
+  const { width, height } = page.getSize();
+  const headerBottom = height - 72;
+  page.drawRectangle({ x: 0, y: headerBottom, width, height: 72, color: BRAND.green });
 
   if (logoImage) {
-    page.drawRectangle({ x: 418, y: 780, width: 140, height: 48, color: rgb(1, 1, 1), opacity: 0.98 });
+    const logoWidth = width >= 520 ? 140 : 114;
+    const logoX = width - logoWidth - 36;
+    page.drawRectangle({ x: logoX, y: headerBottom + 10, width: logoWidth, height: 48, color: rgb(1, 1, 1), opacity: 0.98 });
     page.drawImage(logoImage, {
-      x: 424,
-      y: 784,
-      width: 128,
+      x: logoX + 6,
+      y: headerBottom + 14,
+      width: logoWidth - 12,
       height: 40,
     });
   }
 
   page.drawText("Maanak Labs", {
     x: PAGE_MARGIN,
-    y: 810,
+    y: height - 32,
     size: 20,
     font: fonts.bold,
     color: rgb(1, 1, 1),
   });
   page.drawText("A Unit of Entorno Greens Seeds Private Limited", {
     x: PAGE_MARGIN,
-    y: 792,
-    size: 9,
+    y: height - 50,
+    size: width >= 520 ? 9 : 8,
     font: fonts.regular,
     color: rgb(0.92, 0.98, 0.96),
   });
   page.drawText(title, {
     x: PAGE_MARGIN,
-    y: 752,
-    size: 16,
+    y: height - 90,
+    size: width >= 520 ? 16 : 14,
     font: fonts.bold,
     color: BRAND.dark,
   });
@@ -136,8 +140,8 @@ function drawHeader(page, fonts, title, subTitle, logoImage) {
   if (subTitle) {
     page.drawText(subTitle, {
       x: PAGE_MARGIN,
-      y: 736,
-      size: 9,
+      y: height - 106,
+      size: width >= 520 ? 9 : 8,
       font: fonts.regular,
       color: BRAND.blue,
     });
@@ -232,7 +236,7 @@ function drawSampleCard(page, fonts, sample, index, startY) {
   });
 
   page.drawText(
-    `Lot Qty: ${safeText(sample.lotQuantity)} | Seed Class: ${safeText(sample.seedClass)} | Stage: ${safeText(sample.stage)} | No. of Samples: ${safeText(sample.numberOfSamples)}`,
+    `Lot Qty: ${safeText(sample.lotQuantity)} Kgs | Seed Class: ${safeText(sample.seedClass)} | Seed Type: ${safeText(sample.stage)} | No. of Samples: ${safeText(sample.numberOfSamples)}`,
     {
       x: PAGE_MARGIN + 10,
       y: startY - 48,
@@ -439,120 +443,118 @@ async function addRequestLetterPages(pdfDoc, fonts, logoImage, requestData) {
 
 async function addSampleSlipPages(pdfDoc, fonts, logoImage, requestData) {
   const { request, user, samples } = requestData;
-
-  for (let index = 0; index < samples.length; index += 1) {
-    const sample = samples[index];
+  for (let offset = 0; offset < samples.length; offset += 8) {
     const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    drawHeader(page, fonts, `Sample Bag Slip ${index + 1}`, "Paste this slip inside/outside the sample bag", logoImage);
+    drawHeader(page, fonts, "Sample Bag Slips", "Print on A4. Each sheet contains up to 8 slips.", logoImage);
+    const pageSamples = samples.slice(offset, offset + 8);
+    const cardWidth = 240;
+    const cardHeight = 150;
+    const gapX = 24;
+    const gapY = 18;
+    const startX = 45;
+    const startY = 704;
 
-    page.drawRectangle({ x: 42, y: 470, width: 511, height: 220, color: BRAND.light, borderColor: BRAND.border, borderWidth: 1 });
-    page.drawText(`Request Number: ${safeText(request.requestNumber)}`, {
-      x: 58,
-      y: 664,
-      size: 11,
-      font: fonts.bold,
-      color: BRAND.dark,
-    });
-    page.drawText(`Sample ID: ${safeText(sample.sampleId)}`, {
-      x: 58,
-      y: 642,
-      size: 14,
-      font: fonts.bold,
-      color: BRAND.blue,
-    });
+    for (let index = 0; index < pageSamples.length; index += 1) {
+      const sample = pageSamples[index];
+      const row = Math.floor(index / 2);
+      const column = index % 2;
+      const x = startX + column * (cardWidth + gapX);
+      const yTop = startY - row * (cardHeight + gapY);
+      const barcodeImage = await pdfDoc.embedPng(await createBarcodePngBuffer(sample.sampleId));
 
-    const detailLines = [
-      `Crop: ${safeText(sample.crop)}`,
-      `Variety: ${safeText(sample.variety)}`,
-      `Lot Number: ${safeText(sample.lotNumber)}`,
-      `Lot Quantity: ${safeText(sample.lotQuantity)}`,
-      `Seed Class: ${safeText(sample.seedClass)}`,
-      `Stage: ${safeText(sample.stage)}`,
-      `No. of Samples: ${safeText(sample.numberOfSamples)}`,
-      `Sender Mobile: ${safeText(request.contactMobile || user?.mobile)}`,
-    ];
+      page.drawRectangle({
+        x,
+        y: yTop - cardHeight,
+        width: cardWidth,
+        height: cardHeight,
+        color: rgb(1, 1, 1),
+        borderColor: BRAND.border,
+        borderWidth: 1,
+      });
 
-    detailLines.forEach((line, lineIndex) => {
-      page.drawText(line, {
-        x: 58,
-        y: 614 - lineIndex * 18,
-        size: 9.5,
+      page.drawRectangle({
+        x,
+        y: yTop - 26,
+        width: cardWidth,
+        height: 26,
+        color: BRAND.light,
+      });
+
+      page.drawText(`Sample Slip ${offset + index + 1}`, {
+        x: x + 8,
+        y: yTop - 16,
+        size: 9,
+        font: fonts.bold,
+        color: BRAND.green,
+      });
+      page.drawText(safeText(request.requestNumber), {
+        x: x + 120,
+        y: yTop - 16,
+        size: 8,
         font: fonts.regular,
         color: BRAND.dark,
       });
-    });
 
-    drawParagraph(
-      page,
-      fonts.regular,
-      `Selected Tests: ${safeText((sample.selectedTestNames || []).join(", "), "No tests selected")}`,
-      58,
-      468,
-      290,
-      9.5,
-      12
-    );
+      const slipLines = [
+        `Date: ${dayjs(request.createdAt).format("DD MMM YYYY")}`,
+        `Crop: ${safeText(sample.crop)}`,
+        `Variety: ${safeText(sample.variety)}`,
+        `Lot No: ${safeText(sample.lotNumber)}`,
+        `Lot Qty: ${safeText(sample.lotQuantity)} Kgs`,
+        `Seed Type: ${safeText(sample.stage)}`,
+      ];
 
-    if (sample.remarks) {
-      drawParagraph(page, fonts.regular, `Remarks: ${sample.remarks}`, 58, 430, 290, 9, 11);
+      slipLines.forEach((line, lineIndex) => {
+        page.drawText(line, {
+          x: x + 8,
+          y: yTop - 42 - lineIndex * 13,
+          size: 7.5,
+          font: fonts.regular,
+          color: BRAND.dark,
+        });
+      });
+
+      drawParagraph(
+        page,
+        fonts.regular,
+        `Tests: ${safeText((sample.selectedTestNames || []).join(", "), "No tests selected")}`,
+        x + 8,
+        yTop - 122,
+        140,
+        7.3,
+        9
+      );
+
+      page.drawText(`Sample ID: ${safeText(sample.sampleId)}`, {
+        x: x + 8,
+        y: yTop - 96,
+        size: 8,
+        font: fonts.bold,
+        color: BRAND.blue,
+      });
+
+      page.drawImage(barcodeImage, {
+        x: x + 148,
+        y: yTop - 110,
+        width: 80,
+        height: 18,
+      });
+      page.drawText(safeText(sample.sampleId), {
+        x: x + 150,
+        y: yTop - 120,
+        size: 6.8,
+        font: fonts.regular,
+        color: BRAND.dark,
+      });
+
+      page.drawText("Write Sample ID on pouch with non-erasable marker", {
+        x: x + 8,
+        y: yTop - 138,
+        size: 6.7,
+        font: fonts.regular,
+        color: BRAND.muted,
+      });
     }
-
-    const qrPayload = JSON.stringify({
-      requestNumber: request.requestNumber,
-      sampleId: sample.sampleId,
-      crop: sample.crop,
-      variety: sample.variety,
-      lotNumber: sample.lotNumber,
-      seedClass: sample.seedClass,
-      tests: sample.selectedTestNames,
-    });
-
-    const [qrImage, barcodeImage] = await Promise.all([
-      pdfDoc.embedPng(await createQrPngBuffer(qrPayload)),
-      pdfDoc.embedPng(await createBarcodePngBuffer(sample.sampleId)),
-    ]);
-
-    page.drawRectangle({ x: 374, y: 516, width: 152, height: 152, color: rgb(1, 1, 1), borderColor: BRAND.border, borderWidth: 1 });
-    page.drawImage(qrImage, {
-      x: 389,
-      y: 532,
-      width: 122,
-      height: 122,
-    });
-    page.drawText("Scan for sample details", {
-      x: 393,
-      y: 520,
-      size: 8.5,
-      font: fonts.regular,
-      color: BRAND.blue,
-    });
-
-    page.drawRectangle({ x: 58, y: 378, width: 468, height: 72, color: rgb(1, 1, 1), borderColor: BRAND.border, borderWidth: 1 });
-    page.drawImage(barcodeImage, {
-      x: 82,
-      y: 402,
-      width: 420,
-      height: 24,
-    });
-    page.drawText(sample.sampleId, {
-      x: 221,
-      y: 386,
-      size: 11,
-      font: fonts.bold,
-      color: BRAND.dark,
-    });
-
-    page.drawRectangle({ x: 42, y: 318, width: 511, height: 42, color: rgb(0.98, 0.99, 1), borderColor: BRAND.border, borderWidth: 0.8 });
-    drawParagraph(
-      page,
-      fonts.regular,
-      "Paste this slip inside or outside the matching sample bag. Do not mix two samples in one packet. Ensure the Sample ID on the slip matches the packed sample.",
-      58,
-      344,
-      475,
-      9,
-      11
-    );
   }
 }
 
@@ -660,89 +662,104 @@ async function addPackingInstructionsPage(pdfDoc, fonts, logoImage, settings) {
   );
 }
 
-async function addAddressLabelPage(pdfDoc, fonts, logoImage, requestData) {
+async function addAddressLabelPage(pdfDoc, fonts, logoImage, requestData, options = {}) {
   const { request, user, settings } = requestData;
-  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  const pageWidth = options.pageWidth || PAGE_WIDTH;
+  const pageHeight = options.pageHeight || PAGE_HEIGHT;
+  const page = pdfDoc.addPage([pageWidth, pageHeight]);
   drawHeader(page, fonts, "Lab Address Label", "Seed Testing Sample - Handle Carefully", logoImage);
 
-  page.drawRectangle({ x: 72, y: 274, width: 450, height: 286, color: BRAND.light, borderColor: BRAND.border, borderWidth: 1.2 });
+  const cardX = pageWidth === PAGE_WIDTH ? 72 : 34;
+  const cardY = pageWidth === PAGE_WIDTH ? 274 : 130;
+  const cardWidth = pageWidth === PAGE_WIDTH ? 450 : 350;
+  const cardHeight = pageWidth === PAGE_WIDTH ? 286 : 320;
+  page.drawRectangle({ x: cardX, y: cardY, width: cardWidth, height: cardHeight, color: BRAND.light, borderColor: BRAND.border, borderWidth: 1.2 });
 
   if (logoImage) {
     page.drawImage(logoImage, {
-      x: 102,
-      y: 496,
-      width: 176,
-      height: 54,
+      x: cardX + 24,
+      y: cardY + cardHeight - 64,
+      width: pageWidth === PAGE_WIDTH ? 176 : 156,
+      height: pageWidth === PAGE_WIDTH ? 54 : 48,
     });
   }
 
   page.drawText(settings.siteName, {
-    x: 102,
-    y: 460,
-    size: 22,
+    x: cardX + 24,
+    y: cardY + cardHeight - 100,
+    size: pageWidth === PAGE_WIDTH ? 22 : 20,
     font: fonts.bold,
     color: BRAND.green,
   });
   page.drawText(settings.siteTagline, {
-    x: 102,
-    y: 438,
+    x: cardX + 24,
+    y: cardY + cardHeight - 122,
     size: 10,
     font: fonts.regular,
     color: BRAND.dark,
   });
-  drawParagraph(page, fonts.regular, `Address: ${settings.contactDetails.address}`, 102, 398, 300, 11, 16);
+  drawParagraph(page, fonts.regular, `To Lab: ${settings.contactDetails.address}`, cardX + 24, cardY + cardHeight - 162, pageWidth === PAGE_WIDTH ? 300 : 250, 11, 16);
   page.drawText(`Mobile: ${settings.contactDetails.mobile}`, {
-    x: 102,
-    y: 344,
+    x: cardX + 24,
+    y: cardY + cardHeight - 216,
     size: 11,
     font: fonts.regular,
     color: BRAND.dark,
   });
   page.drawText(`Email: ${settings.contactDetails.email}`, {
-    x: 102,
-    y: 322,
+    x: cardX + 24,
+    y: cardY + cardHeight - 238,
     size: 11,
     font: fonts.regular,
     color: BRAND.dark,
   });
   page.drawText("Seed Testing Sample - Handle Carefully", {
-    x: 102,
-    y: 286,
+    x: cardX + 24,
+    y: cardY + 20,
     size: 13,
     font: fonts.bold,
     color: BRAND.danger,
   });
-
-  page.drawRectangle({ x: 376, y: 330, width: 126, height: 148, color: rgb(1, 1, 1), borderColor: BRAND.border, borderWidth: 1 });
-  page.drawText("Sender Details", {
-    x: 392,
-    y: 456,
+  const senderX = pageWidth === PAGE_WIDTH ? 376 : cardX + 24;
+  const senderY = pageWidth === PAGE_WIDTH ? 330 : cardY + 46;
+  const senderWidth = pageWidth === PAGE_WIDTH ? 126 : 300;
+  const senderHeight = pageWidth === PAGE_WIDTH ? 148 : 96;
+  page.drawRectangle({ x: senderX, y: senderY, width: senderWidth, height: senderHeight, color: rgb(1, 1, 1), borderColor: BRAND.border, borderWidth: 1 });
+  page.drawText("From Client", {
+    x: senderX + 12,
+    y: senderY + senderHeight - 18,
     size: 10,
     font: fonts.bold,
     color: BRAND.blue,
   });
   page.drawText(`Name: ${safeText(request.contactName || user?.name)}`, {
-    x: 388,
-    y: 430,
+    x: senderX + 12,
+    y: senderY + senderHeight - 42,
     size: 8.5,
     font: fonts.regular,
     color: BRAND.dark,
   });
   page.drawText(`Mobile: ${safeText(request.contactMobile || user?.mobile)}`, {
-    x: 388,
-    y: 414,
+    x: senderX + 12,
+    y: senderY + senderHeight - 58,
     size: 8.5,
     font: fonts.regular,
     color: BRAND.dark,
   });
   page.drawText(`Request No: ${safeText(request.requestNumber)}`, {
-    x: 388,
-    y: 398,
+    x: senderX + 12,
+    y: senderY + senderHeight - 74,
     size: 8.5,
     font: fonts.regular,
     color: BRAND.dark,
   });
-  drawParagraph(page, fonts.regular, "Paste this label on the outside of the master bag/carton.", 388, 372, 100, 8, 10, BRAND.muted);
+  page.drawText("Confidential | Handle with care", {
+    x: senderX + 12,
+    y: senderY + 10,
+    size: 8,
+    font: fonts.bold,
+    color: BRAND.danger,
+  });
 }
 
 async function generateCombinedRequestPdf({ request, user, payment, samples, settings }) {
@@ -772,6 +789,70 @@ async function generateCombinedRequestPdf({ request, user, payment, samples, set
   return Buffer.from(bytes);
 }
 
+async function generateRequestLetterPdf({ request, user, payment, samples, settings }) {
+  const pdfDoc = await PDFDocument.create();
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fonts = { regular, bold };
+  const preparedSettings = defaultSettings(settings);
+  const logoBytes = getLogoBytes();
+  const logoImage = logoBytes ? await pdfDoc.embedPng(logoBytes) : null;
+
+  await addRequestLetterPages(pdfDoc, fonts, logoImage, {
+    request,
+    user,
+    payment,
+    samples: [...samples].sort((left, right) => left.sampleId.localeCompare(right.sampleId)),
+    settings: preparedSettings,
+  });
+
+  return Buffer.from(await pdfDoc.save());
+}
+
+async function generateSampleSlipsPdf({ request, user, payment, samples, settings }) {
+  const pdfDoc = await PDFDocument.create();
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fonts = { regular, bold };
+  const preparedSettings = defaultSettings(settings);
+  const logoBytes = getLogoBytes();
+  const logoImage = logoBytes ? await pdfDoc.embedPng(logoBytes) : null;
+
+  await addSampleSlipPages(pdfDoc, fonts, logoImage, {
+    request,
+    user,
+    payment,
+    samples: [...samples].sort((left, right) => left.sampleId.localeCompare(right.sampleId)),
+    settings: preparedSettings,
+  });
+
+  return Buffer.from(await pdfDoc.save());
+}
+
+async function generateAddressLabelPdf({ request, user, settings }) {
+  const pdfDoc = await PDFDocument.create();
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fonts = { regular, bold };
+  const preparedSettings = defaultSettings(settings);
+  const logoBytes = getLogoBytes();
+  const logoImage = logoBytes ? await pdfDoc.embedPng(logoBytes) : null;
+
+  await addAddressLabelPage(
+    pdfDoc,
+    fonts,
+    logoImage,
+    {
+      request,
+      user,
+      settings: preparedSettings,
+    },
+    { pageWidth: 420, pageHeight: 595 }
+  );
+
+  return Buffer.from(await pdfDoc.save());
+}
+
 async function generatePackingGuidePdf({ settings }) {
   const pdfDoc = await PDFDocument.create();
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -797,4 +878,89 @@ async function generatePackingGuidePdf({ settings }) {
   return Buffer.from(bytes);
 }
 
-module.exports = { generateCombinedRequestPdf, generatePackingGuidePdf };
+async function generateSampleSizeGuidePdf({ settings }) {
+  const pdfDoc = await PDFDocument.create();
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fonts = { regular, bold };
+  const preparedSettings = defaultSettings(settings);
+  const logoBytes = getLogoBytes();
+  const logoImage = logoBytes ? await pdfDoc.embedPng(logoBytes) : null;
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+
+  drawHeader(page, fonts, "Crop-wise Sample Size Guide", "Indicative sample weight for dispatch planning", logoImage);
+  page.drawText("Use the required sample quantity from the chosen service and ensure the pouch carries the correct sample slip.", {
+    x: PAGE_MARGIN,
+    y: 704,
+    size: 10,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+
+  const rows = [
+    ["Maize", "1000 g"],
+    ["Paddy / Rice", "700 g"],
+    ["Wheat", "1000 g"],
+    ["Soybean", "1000 g"],
+    ["Cotton", "500 g"],
+    ["Mustard", "400 g"],
+    ["Bajra / Pearl Millet", "400 g"],
+    ["Sorghum", "500 g"],
+    ["Vegetable Seeds", "As per service requirement / admin confirmation"],
+  ];
+
+  let y = 660;
+  page.drawRectangle({ x: PAGE_MARGIN, y: y - 26, width: CONTENT_WIDTH, height: 26, color: BRAND.green });
+  page.drawText("Crop", { x: PAGE_MARGIN + 12, y: y - 16, size: 10, font: fonts.bold, color: rgb(1, 1, 1) });
+  page.drawText("Indicative Sample Weight", { x: 300, y: y - 16, size: 10, font: fonts.bold, color: rgb(1, 1, 1) });
+  y -= 30;
+
+  rows.forEach((row, index) => {
+    page.drawRectangle({
+      x: PAGE_MARGIN,
+      y: y - 28,
+      width: CONTENT_WIDTH,
+      height: 28,
+      color: index % 2 === 0 ? rgb(0.99, 1, 1) : BRAND.light,
+      borderColor: BRAND.border,
+      borderWidth: 0.5,
+    });
+    page.drawText(row[0], { x: PAGE_MARGIN + 12, y: y - 18, size: 9.5, font: fonts.regular, color: BRAND.dark });
+    page.drawText(row[1], { x: 300, y: y - 18, size: 9.5, font: fonts.bold, color: BRAND.dark });
+    y -= 28;
+  });
+
+  drawParagraph(
+    page,
+    fonts.regular,
+    "Please treat this as a user-friendly dispatch guide. Final sample quantity may vary by service, crop, and testing scope. When in doubt, contact the lab before courier dispatch.",
+    PAGE_MARGIN,
+    342,
+    CONTENT_WIDTH,
+    10,
+    14
+  );
+
+  drawParagraph(
+    page,
+    fonts.regular,
+    `Lab contact: ${preparedSettings.contactDetails.mobile} | ${preparedSettings.contactDetails.email}`,
+    PAGE_MARGIN,
+    296,
+    CONTENT_WIDTH,
+    10,
+    14,
+    BRAND.blue
+  );
+
+  return Buffer.from(await pdfDoc.save());
+}
+
+module.exports = {
+  generateCombinedRequestPdf,
+  generateRequestLetterPdf,
+  generateSampleSlipsPdf,
+  generateAddressLabelPdf,
+  generatePackingGuidePdf,
+  generateSampleSizeGuidePdf,
+};

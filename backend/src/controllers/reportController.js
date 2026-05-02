@@ -5,34 +5,47 @@ const TestingRequest = require("../models/TestingRequest");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const { generateVerificationToken } = require("../utils/security");
-const uploadReport = asyncHandler(async (req, res) => {
-  const request = await TestingRequest.findById(req.params.requestId);
 
+async function uploadDocument({ req, reportType }) {
+  const request = await TestingRequest.findById(req.params.requestId);
   if (!request) {
     throw new ApiError(404, "Testing request not found");
   }
 
   if (!req.file) {
-    throw new ApiError(400, "Report PDF file is required");
+    throw new ApiError(400, "PDF file is required");
   }
 
-  const verificationCode = generateVerificationToken(16);
   const report = await Report.create({
     request: request._id,
     uploadedByAdmin: req.user._id,
     fileName: req.file.originalname,
     filePath: req.file.path,
-    verificationCode,
+    verificationCode: generateVerificationToken(16),
+    reportType,
   });
 
-  request.latestReport = report._id;
-  request.requestStatus = "Report Generated";
+  const attachment = {
+    fileName: req.file.originalname,
+    filePath: req.file.path,
+    uploadedAt: new Date(),
+    uploadedByAdmin: req.user._id,
+  };
+
+  if (reportType === "report") {
+    request.latestReport = report._id;
+    request.reportAttachment = attachment;
+    request.requestStatus = "Report Generated";
+  } else {
+    request.latestInvoice = report._id;
+    request.invoiceAttachment = attachment;
+  }
+
   await request.save();
+  return report;
+}
 
-  res.status(201).json({ success: true, report });
-});
-
-const downloadReport = asyncHandler(async (req, res) => {
+async function downloadDocument({ req, reportType }) {
   const request = await TestingRequest.findById(req.params.requestId);
   if (!request) {
     throw new ApiError(404, "Request not found");
@@ -40,19 +53,44 @@ const downloadReport = asyncHandler(async (req, res) => {
 
   const isUserOwner = req.user.role === "user" && String(request.user) === String(req.user._id);
   if (req.user.role === "user" && !isUserOwner) {
-    throw new ApiError(403, "You cannot access this report");
+    throw new ApiError(403, "You cannot access this document");
   }
 
-  if (!request.latestReport) {
-    throw new ApiError(404, "Final report is not available yet");
+  const attachment = reportType === "report" ? request.reportAttachment : request.invoiceAttachment;
+  const linkedReportId = reportType === "report" ? request.latestReport : request.latestInvoice;
+  if (!linkedReportId || !attachment?.filePath) {
+    throw new ApiError(404, `${reportType === "report" ? "Final report" : "Invoice"} is not available yet`);
   }
 
-  const report = await Report.findById(request.latestReport);
+  const report = await Report.findById(linkedReportId);
   if (!report || !fs.existsSync(report.filePath)) {
-    throw new ApiError(404, "Report file missing");
+    throw new ApiError(404, "File missing");
   }
 
-  res.download(path.resolve(report.filePath), report.fileName);
+  return {
+    filePath: path.resolve(report.filePath),
+    fileName: report.fileName,
+  };
+}
+
+const uploadReport = asyncHandler(async (req, res) => {
+  const report = await uploadDocument({ req, reportType: "report" });
+  res.status(201).json({ success: true, report });
 });
 
-module.exports = { uploadReport, downloadReport };
+const uploadInvoice = asyncHandler(async (req, res) => {
+  const invoice = await uploadDocument({ req, reportType: "invoice" });
+  res.status(201).json({ success: true, invoice });
+});
+
+const downloadReport = asyncHandler(async (req, res) => {
+  const { filePath, fileName } = await downloadDocument({ req, reportType: "report" });
+  res.download(filePath, fileName);
+});
+
+const downloadInvoice = asyncHandler(async (req, res) => {
+  const { filePath, fileName } = await downloadDocument({ req, reportType: "invoice" });
+  res.download(filePath, fileName);
+});
+
+module.exports = { uploadReport, uploadInvoice, downloadReport, downloadInvoice };

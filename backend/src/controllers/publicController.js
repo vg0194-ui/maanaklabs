@@ -6,20 +6,59 @@ const Report = require("../models/Report");
 const TestingRequest = require("../models/TestingRequest");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
-const { generatePackingGuidePdf } = require("../services/pdfService");
+const { generatePackingGuidePdf, generateSampleSizeGuidePdf } = require("../services/pdfService");
 const { sanitizeBlogContent } = require("../utils/blogSanitizer");
 
+async function getCurrentRateMap(activeServices) {
+  const serviceIds = activeServices.map((service) => service._id);
+  const rates = await Rate.find({
+    service: { $in: serviceIds },
+    isActive: true,
+    effectiveDate: { $lte: new Date() },
+  })
+    .populate("service")
+    .sort({ effectiveDate: -1, createdAt: -1 })
+    .lean();
+
+  const latestPerKey = new Map();
+  for (const rate of rates) {
+    if (!rate.service?.isActive) {
+      continue;
+    }
+
+    const key = `${String(rate.service._id)}::${rate.crop || ""}`;
+    if (!latestPerKey.has(key)) {
+      latestPerKey.set(key, rate);
+    }
+  }
+
+  return latestPerKey;
+}
+
 const getPublicContent = asyncHandler(async (_req, res) => {
-  const [services, rates, settings, blogs] = await Promise.all([
+  const [services, settings, blogs] = await Promise.all([
     Service.find({ isActive: true }).sort({ name: 1 }).lean(),
-    Rate.find({ isActive: true }).populate("service").sort({ effectiveDate: -1 }).lean(),
     WebsiteSettings.findOne().lean(),
     Blog.find({ isPublished: true }).sort({ publishedAt: -1 }).lean(),
   ]);
 
+  const rateMap = await getCurrentRateMap(services);
+
+  const serviceRows = services.map((service) => {
+    const genericRate = rateMap.get(`${String(service._id)}::`);
+    return {
+      ...service,
+      rate: genericRate?.amount ?? service.rate ?? 0,
+      gstPercentage: genericRate?.gstPercentage ?? 0,
+      currentRateEffectiveDate: genericRate?.effectiveDate ?? null,
+    };
+  });
+
+  const rates = [...rateMap.values()];
+
   res.json({
     success: true,
-    services,
+    services: serviceRows,
     rates,
     settings,
     blogs: blogs.map((blog) => ({
@@ -35,11 +74,29 @@ const getPublicContent = asyncHandler(async (_req, res) => {
 });
 
 const getServiceBySlug = asyncHandler(async (req, res) => {
-  const service = await Service.findOne({ slug: req.params.slug }).lean();
+  const service = await Service.findOne({ slug: req.params.slug, isActive: true }).lean();
   if (!service) {
     throw new ApiError(404, "Service not found");
   }
-  res.json({ success: true, service });
+
+  const rate = await Rate.findOne({
+    service: service._id,
+    crop: "",
+    isActive: true,
+    effectiveDate: { $lte: new Date() },
+  })
+    .sort({ effectiveDate: -1 })
+    .lean();
+
+  res.json({
+    success: true,
+    service: {
+      ...service,
+      rate: rate?.amount ?? service.rate ?? 0,
+      gstPercentage: rate?.gstPercentage ?? 0,
+      currentRateEffectiveDate: rate?.effectiveDate ?? null,
+    },
+  });
 });
 
 const getBlogBySlug = asyncHandler(async (req, res) => {
@@ -57,15 +114,12 @@ const getBlogBySlug = asyncHandler(async (req, res) => {
 });
 
 const verifyReport = asyncHandler(async (req, res) => {
-  const report = await Report.findOne({ verificationCode: req.params.code })
-    .populate("request")
-    .lean();
-
+  const report = await Report.findOne({ verificationCode: req.params.code, reportType: "report" }).populate("request").lean();
   if (!report) {
     throw new ApiError(404, "Verification code not found");
   }
 
-  const request = await TestingRequest.findById(report.request._id).populate("user").lean();
+  const request = await TestingRequest.findById(report.request._id).lean();
   res.json({
     success: true,
     report: {
@@ -86,10 +140,19 @@ const getPackingGuidePdf = asyncHandler(async (_req, res) => {
   res.send(pdfBuffer);
 });
 
+const getSampleSizeGuidePdf = asyncHandler(async (_req, res) => {
+  const settings = await WebsiteSettings.findOne().lean();
+  const pdfBuffer = await generateSampleSizeGuidePdf({ settings });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", 'inline; filename="maanak-labs-sample-size-guide.pdf"');
+  res.send(pdfBuffer);
+});
+
 module.exports = {
   getPublicContent,
   getServiceBySlug,
   getBlogBySlug,
   verifyReport,
   getPackingGuidePdf,
+  getSampleSizeGuidePdf,
 };

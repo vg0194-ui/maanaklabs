@@ -19,9 +19,9 @@ export async function apiFetch(path, { method = "GET", body, token, headers = {}
   return data;
 }
 
-export async function uploadFile(path, file, token) {
+export async function uploadFile(path, file, token, fieldName = "report") {
   const formData = new FormData();
-  formData.append("report", file);
+  formData.append(fieldName, file);
 
   const response = await fetch(`${API_URL}${path}`, {
     method: "POST",

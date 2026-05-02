@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch, uploadFile } from "../../api/client";
 import { useAuth } from "../../contexts/AuthContext";
 import StatusBadge from "../../components/dashboard/StatusBadge";
+import { formatCurrency, formatDate } from "../../utils/formatters";
 
 const statuses = [
   "Request Created",
@@ -48,10 +49,15 @@ function AdminRequestsPage() {
     fetchRequests();
   };
 
-  const handleUpload = async (requestId, file) => {
+  const handleUpload = async (requestId, file, type) => {
     if (!file) return;
-    await uploadFile(`/reports/${requestId}/upload`, file, token);
-    setMessage("Report uploaded.");
+    await uploadFile(
+      type === "report" ? `/reports/${requestId}/upload` : `/reports/${requestId}/invoice-upload`,
+      file,
+      token,
+      type === "report" ? "report" : "invoice"
+    );
+    setMessage(type === "report" ? "Report uploaded." : "Invoice uploaded.");
     fetchRequests();
   };
 
@@ -60,7 +66,7 @@ function AdminRequestsPage() {
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <h1 className="text-3xl font-extrabold">Requests</h1>
-          <p className="mt-2 text-sm text-slate-600">Filter, update status, and upload final reports.</p>
+          <p className="mt-2 text-sm text-slate-600">Update sample status, upload final report or invoice, and track request-level progress.</p>
         </div>
         <div className="grid gap-3 md:grid-cols-3 xl:w-[760px]">
           {Object.entries(filters).map(([field, value]) =>
@@ -87,20 +93,29 @@ function AdminRequestsPage() {
             <tr>
               <th className="pb-3">Request</th>
               <th className="pb-3">User</th>
+              <th className="pb-3">Samples</th>
+              <th className="pb-3">Amount</th>
               <th className="pb-3">Payment</th>
               <th className="pb-3">Status</th>
               <th className="pb-3">Update</th>
-              <th className="pb-3">Report</th>
+              <th className="pb-3">Report PDF</th>
+              <th className="pb-3">Invoice PDF</th>
             </tr>
           </thead>
           <tbody>
             {requests.map((request) => (
               <tr key={request._id} className="border-t border-slate-100 align-top">
-                <td className="py-4 font-semibold text-slate-800">{request.requestNumber}</td>
+                <td className="py-4">
+                  <div className="font-semibold text-slate-800">{request.requestNumber}</div>
+                  <div className="text-slate-500">{formatDate(request.createdAt)}</div>
+                </td>
                 <td className="py-4">
                   <div>{request.contactName}</div>
                   <div className="text-slate-500">{request.contactEmail}</div>
+                  <div className="text-slate-500">{request.companyName}</div>
                 </td>
+                <td className="py-4">{request.sampleCount || 0}</td>
+                <td className="py-4">{formatCurrency(request.totalAmount)}</td>
                 <td className="py-4">
                   <StatusBadge status={request.paymentStatus} />
                 </td>
@@ -119,7 +134,16 @@ function AdminRequestsPage() {
                   </select>
                 </td>
                 <td className="py-4">
-                  <input type="file" accept="application/pdf" onChange={(event) => handleUpload(request._id, event.target.files?.[0])} />
+                  <div className="space-y-2">
+                    <input type="file" accept="application/pdf" onChange={(event) => handleUpload(request._id, event.target.files?.[0], "report")} />
+                    <div className="text-xs text-slate-500">{request.hasReport ? "Uploaded" : "Pending upload"}</div>
+                  </div>
+                </td>
+                <td className="py-4">
+                  <div className="space-y-2">
+                    <input type="file" accept="application/pdf" onChange={(event) => handleUpload(request._id, event.target.files?.[0], "invoice")} />
+                    <div className="text-xs text-slate-500">{request.hasInvoice ? "Uploaded" : "Pending upload"}</div>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -131,4 +155,3 @@ function AdminRequestsPage() {
 }
 
 export default AdminRequestsPage;
-

@@ -2,6 +2,11 @@ const Rate = require("../models/Rate");
 const Service = require("../models/Service");
 
 async function getActiveRateForService(serviceId, crop = "") {
+  const service = await Service.findById(serviceId).lean();
+  if (!service || service.isActive === false) {
+    return null;
+  }
+
   const specificRate = await Rate.findOne({
     service: serviceId,
     crop: crop.trim(),
@@ -26,11 +31,6 @@ async function getActiveRateForService(serviceId, crop = "") {
 
   if (genericRate) {
     return genericRate;
-  }
-
-  const service = await Service.findById(serviceId).lean();
-  if (!service) {
-    return null;
   }
 
   return {
@@ -74,4 +74,3 @@ async function calculateRequestPricing(samples = []) {
 }
 
 module.exports = { getActiveRateForService, calculateRequestPricing };
-

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { Download, ExternalLink } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { apiFetch } from "../../api/client";
+import { apiFetch, API_URL, downloadProtectedFile } from "../../api/client";
 import { useAuth } from "../../contexts/AuthContext";
 import StatusBadge from "../../components/dashboard/StatusBadge";
 import SampleGuideSection from "../../components/public/SampleGuideSection";
@@ -27,6 +28,7 @@ function PaymentSuccessPage() {
   const [requestData, setRequestData] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState("");
 
   const fetchRequest = async () => {
     const response = await apiFetch(`/requests/${requestId}`, { token });
@@ -103,9 +105,31 @@ function PaymentSuccessPage() {
     }
   };
 
+  const downloadDocument = async (type, label) => {
+    setDownloading(type);
+    setMessage("");
+    try {
+      const fileNameBase = requestData.request.requestNumber;
+      const config = {
+        slips: { path: `/pdfs/requests/${requestId}/sample-slips`, name: `${fileNameBase}-sample-slips.pdf` },
+        letter: { path: `/pdfs/requests/${requestId}/request-letter`, name: `${fileNameBase}-request-letter.pdf` },
+        address: { path: `/pdfs/requests/${requestId}/address-label`, name: `${fileNameBase}-address-label.pdf` },
+      }[type];
+
+      await downloadProtectedFile(config.path, token, config.name);
+      setMessage(`${label} downloaded successfully.`);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setDownloading("");
+    }
+  };
+
   if (!requestData) {
     return <div className="panel p-8">Loading request...</div>;
   }
+
+  const isPaid = requestData.request.paymentStatus === "Paid";
 
   return (
     <div className="space-y-6">
@@ -122,23 +146,53 @@ function PaymentSuccessPage() {
           </p>
         </div>
         <p className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-          Payments are verified on the server using your Razorpay order, payment ID, and signature. Configure the
-          Razorpay webhook to confirm captured payments reliably in production.
+          Complete payment first. After payment you can download sample slips, the request letter, and the lab address
+          label before dispatching the master bag to Maanak Labs.
         </p>
-        {requestData.request.paymentStatus !== "Paid" ? (
+
+        {!isPaid ? (
           <button type="button" onClick={startPayment} className="btn-primary mt-6" disabled={loading}>
             {loading ? "Opening Razorpay..." : "Pay with Razorpay"}
           </button>
         ) : (
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Link to={`/dashboard/requests/${requestId}/documents`} className="btn-primary">
-              Open PDF download page
-            </Link>
-            <Link to="/dashboard/requests" className="btn-secondary">
-              Back to requests
-            </Link>
+          <div className="mt-6 space-y-4">
+            <div className="grid gap-3 lg:grid-cols-3">
+              <button type="button" onClick={() => downloadDocument("slips", "Sample slips")} className="btn-primary gap-2" disabled={downloading === "slips"}>
+                <Download className="h-4 w-4" />
+                {downloading === "slips" ? "Downloading..." : "Download Sample Slips"}
+              </button>
+              <button type="button" onClick={() => downloadDocument("letter", "Request letter")} className="btn-secondary gap-2" disabled={downloading === "letter"}>
+                <Download className="h-4 w-4" />
+                {downloading === "letter" ? "Downloading..." : "Download Request Letter"}
+              </button>
+              <button type="button" onClick={() => downloadDocument("address", "Address label")} className="btn-secondary gap-2" disabled={downloading === "address"}>
+                <Download className="h-4 w-4" />
+                {downloading === "address" ? "Downloading..." : "Download Address Label"}
+              </button>
+            </div>
+
+            <div className="rounded-3xl bg-slate-50 p-5 text-sm leading-7 text-slate-700">
+              <p className="font-semibold text-brand-green">Dispatch instructions</p>
+              <ol className="mt-3 list-decimal space-y-2 pl-5">
+                <li>Withdraw the sample properly and use the sample weight mentioned in the crop-wise sample size list.</li>
+                <li>Put the printed sample slip inside the sample pouch and write the Sample ID on the pouch with a non-erasable marker.</li>
+                <li>Seal the sample pouch using thread or another secure method so the pouch does not open in transit.</li>
+                <li>Keep all sealed sample pouches in one master bag and place the request letter inside that master bag.</li>
+                <li>Close the master bag tightly and paste the address label using tape or glue so it reaches the correct lab address.</li>
+              </ol>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <a href={`${API_URL}/public/sample-size-guide.pdf`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-brand-blue">
+                  Open crop-wise sample size PDF <ExternalLink className="ml-1 inline h-4 w-4" />
+                </a>
+                <Link to={`/dashboard/requests/${requestId}/documents`} className="text-sm font-semibold text-brand-blue">
+                  Open combined PDF page
+                </Link>
+              </div>
+            </div>
           </div>
         )}
+
         {message ? <p className="mt-4 text-sm font-medium text-emerald-700">{message}</p> : null}
       </div>
 
@@ -148,4 +202,3 @@ function PaymentSuccessPage() {
 }
 
 export default PaymentSuccessPage;
-
