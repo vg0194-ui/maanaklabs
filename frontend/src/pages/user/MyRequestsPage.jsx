@@ -59,7 +59,7 @@ function MyRequestsPage() {
               <th className="pb-3">Status</th>
               <th className="pb-3">Report</th>
               <th className="pb-3">Invoice</th>
-              <th className="pb-3">Request Docs</th>
+              <th className="pb-3">Download Documents</th>
             </tr>
           </thead>
           <tbody>
@@ -106,7 +106,7 @@ function MyRequestsPage() {
                 <td className="py-4">
                   {request.paymentStatus === "Paid" ? (
                     <Link to={`/dashboard/requests/${request._id}/documents`} className="text-sm font-semibold text-brand-blue">
-                      Open downloads
+                      Download Documents
                     </Link>
                   ) : (
                     <Link to={`/dashboard/payment-success/${request._id}`} className="text-sm font-semibold text-brand-blue">
