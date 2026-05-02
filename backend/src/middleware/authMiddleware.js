@@ -5,7 +5,11 @@ const Admin = require("../models/Admin");
 
 async function protect(req, _res, next) {
   const authHeader = req.headers.authorization || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+  const queryToken =
+    req.method === "GET" && (req.path.startsWith("/requests/") || req.path.endsWith("/download") || req.path.includes("invoice-download"))
+      ? req.query.downloadToken
+      : null;
+  const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : queryToken || null;
 
   if (!token) {
     return next(new ApiError(401, "Authentication token missing"));
@@ -41,4 +45,3 @@ function authorize(...roles) {
 }
 
 module.exports = { protect, authorize };
-
