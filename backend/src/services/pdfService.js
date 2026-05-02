@@ -9,6 +9,8 @@ const PAGE_WIDTH = 595;
 const PAGE_HEIGHT = 842;
 const PAGE_MARGIN = 40;
 const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN * 2;
+const DEFAULT_LAB_ADDRESS =
+  "Maanak Labs, Entorno Greens Campus, Akhepura, Delhi-Jaipur 200ft Bypass, VKI, Jaipur 302013, Rajasthan";
 
 const BRAND = {
   green: rgb(0.07, 0.36, 0.24),
@@ -192,11 +194,11 @@ function defaultSettings(settings = {}) {
       iso17025Note:
         settings.compliance?.iso17025Note || "ISO/IEC 17025 quality-system alignment: to be updated / in process.",
     },
-    contactDetails: {
-      address: settings.contactDetails?.address || "Lab address to be updated by admin.",
-      mobile: settings.contactDetails?.mobile || "Lab mobile to be updated by admin.",
-      email: settings.contactDetails?.email || "lab@example.com",
-    },
+      contactDetails: {
+        address: settings.contactDetails?.address || DEFAULT_LAB_ADDRESS,
+        mobile: settings.contactDetails?.mobile || "Lab mobile to be updated by admin.",
+        email: settings.contactDetails?.email || "lab@example.com",
+      },
   };
 }
 

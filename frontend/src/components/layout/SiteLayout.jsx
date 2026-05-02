@@ -5,6 +5,9 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useSiteData } from "../../contexts/SiteDataContext";
 import BrandLogo from "../public/BrandLogo";
 
+const DEFAULT_LAB_ADDRESS =
+  "Maanak Labs, Entorno Greens Campus, Akhepura, Delhi-Jaipur 200ft Bypass, VKI, Jaipur 302013, Rajasthan";
+
 const navItems = [
   ["Home", "/"],
   ["About", "/about"],
@@ -130,7 +133,7 @@ function SiteLayout() {
           <div>
             <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Contact</h4>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              {settings?.contactDetails?.address || "Lab address to be updated by admin"}
+              {settings?.contactDetails?.address || DEFAULT_LAB_ADDRESS}
             </p>
             <p className="text-sm text-slate-600">{settings?.contactDetails?.mobile || "+91 98765 43210"}</p>
             <p className="text-sm text-slate-600">{settings?.contactDetails?.email || "info@maanaklabs.com"}</p>

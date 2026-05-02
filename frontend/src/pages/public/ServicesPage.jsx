@@ -10,8 +10,8 @@ function ServicesPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Services"
-          title="Testing services for seed quality evaluation"
-          description="Choose from standard service cards or consult for custom test combinations."
+          title="Seed quality testing services for dependable laboratory evaluation"
+          description="Browse laboratory services with practical sample guidance and testing timelines, presented without public pricing clutter so the page remains clean and professional."
         />
         <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {services.map((service) => (
@@ -24,4 +24,3 @@ function ServicesPage() {
 }
 
 export default ServicesPage;
-

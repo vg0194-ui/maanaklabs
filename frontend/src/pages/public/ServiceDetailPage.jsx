@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import SectionHeader from "../../components/public/SectionHeader";
 import { useSiteData } from "../../contexts/SiteDataContext";
-import { formatCurrency } from "../../utils/formatters";
 
 function ServiceDetailPage() {
   const { slug } = useParams();
@@ -34,12 +33,12 @@ function ServiceDetailPage() {
               <p className="mt-2 text-lg font-bold">{service.estimatedTestingTime}</p>
             </div>
             <div className="rounded-3xl bg-slate-50 p-5">
-              <p className="text-sm font-semibold text-slate-500">Rate</p>
-              <p className="mt-2 text-lg font-bold text-brand-green">{formatCurrency(service.rate)}</p>
+              <p className="text-sm font-semibold text-slate-500">Testing scope</p>
+              <p className="mt-2 text-lg font-bold">Professional seed quality evaluation</p>
             </div>
             <div className="rounded-3xl bg-slate-50 p-5">
-              <p className="text-sm font-semibold text-slate-500">Current status</p>
-              <p className="mt-2 text-lg font-bold">{service.isActive ? "Active" : "Inactive"}</p>
+              <p className="text-sm font-semibold text-slate-500">Suitable for</p>
+              <p className="mt-2 text-lg font-bold">Seed companies, growers, dealers, and distributors</p>
             </div>
           </div>
           <div className="mt-8 rounded-3xl border border-slate-200 p-5">
@@ -62,4 +61,3 @@ function ServiceDetailPage() {
 }
 
 export default ServiceDetailPage;
-

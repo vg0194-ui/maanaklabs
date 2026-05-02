@@ -7,7 +7,7 @@ module.exports = {
     "We provide structured seed quality evaluation services with a strong emphasis on clarity, sample traceability, responsive communication, and farmer-friendly guidance.",
   contactDetails: {
     address:
-      "Lab address to be updated by admin, Maanak Labs, Entorno Greens Seeds Private Limited, India",
+      "Maanak Labs, Entorno Greens Campus, Akhepura, Delhi-Jaipur 200ft Bypass, VKI, Jaipur 302013, Rajasthan",
     mobile: process.env.LAB_CONTACT_MOBILE || "+91 98765 43210",
     email: process.env.LAB_CONTACT_EMAIL || "info@maanaklabs.com",
     mapUrl: "https://maps.google.com",
@@ -24,4 +24,3 @@ module.exports = {
       "ISO/IEC 17025 is the internationally recognized competence standard relevant to testing laboratories. Scope and status will be updated after formal confirmation.",
   },
 };
-
