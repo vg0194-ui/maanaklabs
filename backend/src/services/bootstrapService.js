@@ -23,11 +23,10 @@ async function bootstrapDefaults() {
   }
 
   for (const serviceData of defaultServices) {
-    const service = await Service.findOneAndUpdate({ slug: serviceData.slug }, serviceData, {
-      upsert: true,
-      new: true,
-      setDefaultsOnInsert: true,
-    });
+    let service = await Service.findOne({ slug: serviceData.slug });
+    if (!service) {
+      service = await Service.create(serviceData);
+    }
 
     const existingDefaultRate = await Rate.findOne({ service: service._id, crop: "", effectiveDate: { $lte: new Date() } });
     if (!existingDefaultRate) {
@@ -48,13 +47,11 @@ async function bootstrapDefaults() {
   }
 
   for (const blogData of defaultBlogs) {
-    await Blog.findOneAndUpdate({ slug: blogData.slug }, blogData, {
-      upsert: true,
-      new: true,
-      setDefaultsOnInsert: true,
-    });
+    const existingBlog = await Blog.findOne({ slug: blogData.slug });
+    if (!existingBlog) {
+      await Blog.create(blogData);
+    }
   }
 }
 
 module.exports = bootstrapDefaults;
-

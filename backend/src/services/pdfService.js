@@ -98,6 +98,32 @@ function drawLabelValue(page, fonts, label, value, x, y, labelWidth = 110, value
   return Math.min(y - 14, endY);
 }
 
+function drawDottedLine(page, { x1, y1, x2, y2, color = BRAND.border, thickness = 0.8, dash = 5, gap = 4 }) {
+  const deltaX = x2 - x1;
+  const deltaY = y2 - y1;
+  const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+  const unitX = distance === 0 ? 0 : deltaX / distance;
+  const unitY = distance === 0 ? 0 : deltaY / distance;
+
+  let offset = 0;
+  while (offset < distance) {
+    const startX = x1 + unitX * offset;
+    const startY = y1 + unitY * offset;
+    const endOffset = Math.min(offset + dash, distance);
+    const endX = x1 + unitX * endOffset;
+    const endY = y1 + unitY * endOffset;
+
+    page.drawLine({
+      start: { x: startX, y: startY },
+      end: { x: endX, y: endY },
+      thickness,
+      color,
+    });
+
+    offset += dash + gap;
+  }
+}
+
 function drawHeader(page, fonts, title, subTitle, logoImage) {
   const { width, height } = page.getSize();
   const headerBottom = height - 72;
@@ -445,14 +471,39 @@ async function addSampleSlipPages(pdfDoc, fonts, logoImage, requestData) {
   const { request, user, samples } = requestData;
   for (let offset = 0; offset < samples.length; offset += 8) {
     const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    drawHeader(page, fonts, "Sample Bag Slips", "Print on A4. Each sheet contains up to 8 slips.", logoImage);
+    if (logoImage) {
+      page.drawImage(logoImage, {
+        x: PAGE_WIDTH - 128,
+        y: PAGE_HEIGHT - 54,
+        width: 88,
+        height: 28,
+      });
+    }
+
     const pageSamples = samples.slice(offset, offset + 8);
     const cardWidth = 240;
     const cardHeight = 150;
     const gapX = 24;
     const gapY = 18;
     const startX = 45;
-    const startY = 704;
+    const startY = 792;
+
+    drawDottedLine(page, {
+      x1: startX + cardWidth + gapX / 2,
+      y1: 46,
+      x2: startX + cardWidth + gapX / 2,
+      y2: PAGE_HEIGHT - 46,
+    });
+
+    for (let row = 1; row <= 3; row += 1) {
+      const y = startY - row * cardHeight - (row - 0.5) * gapY;
+      drawDottedLine(page, {
+        x1: 36,
+        y1: y,
+        x2: PAGE_WIDTH - 36,
+        y2: y,
+      });
+    }
 
     for (let index = 0; index < pageSamples.length; index += 1) {
       const sample = pageSamples[index];
@@ -469,27 +520,19 @@ async function addSampleSlipPages(pdfDoc, fonts, logoImage, requestData) {
         height: cardHeight,
         color: rgb(1, 1, 1),
         borderColor: BRAND.border,
-        borderWidth: 1,
-      });
-
-      page.drawRectangle({
-        x,
-        y: yTop - 26,
-        width: cardWidth,
-        height: 26,
-        color: BRAND.light,
+        borderWidth: 0.6,
       });
 
       page.drawText(`Sample Slip ${offset + index + 1}`, {
         x: x + 8,
-        y: yTop - 16,
+        y: yTop - 18,
         size: 9,
         font: fonts.bold,
         color: BRAND.green,
       });
       page.drawText(safeText(request.requestNumber), {
         x: x + 120,
-        y: yTop - 16,
+        y: yTop - 18,
         size: 8,
         font: fonts.regular,
         color: BRAND.dark,
@@ -507,7 +550,7 @@ async function addSampleSlipPages(pdfDoc, fonts, logoImage, requestData) {
       slipLines.forEach((line, lineIndex) => {
         page.drawText(line, {
           x: x + 8,
-          y: yTop - 42 - lineIndex * 13,
+          y: yTop - 36 - lineIndex * 12,
           size: 7.5,
           font: fonts.regular,
           color: BRAND.dark,
@@ -519,37 +562,36 @@ async function addSampleSlipPages(pdfDoc, fonts, logoImage, requestData) {
         fonts.regular,
         `Tests: ${safeText((sample.selectedTestNames || []).join(", "), "No tests selected")}`,
         x + 8,
-        yTop - 122,
-        140,
-        7.3,
-        9
+        yTop - 112,
+        128,
+        7.1,
+        8
       );
 
-      page.drawText(`Sample ID: ${safeText(sample.sampleId)}`, {
-        x: x + 8,
-        y: yTop - 96,
-        size: 8,
+      page.drawImage(barcodeImage, {
+        x: x + 152,
+        y: yTop - 104,
+        width: 72,
+        height: 18,
+      });
+      page.drawText("Sample ID", {
+        x: x + 162,
+        y: yTop - 118,
+        size: 6.6,
         font: fonts.bold,
         color: BRAND.blue,
       });
-
-      page.drawImage(barcodeImage, {
-        x: x + 148,
-        y: yTop - 110,
-        width: 80,
-        height: 18,
-      });
       page.drawText(safeText(sample.sampleId), {
         x: x + 150,
-        y: yTop - 120,
-        size: 6.8,
+        y: yTop - 128,
+        size: 6.4,
         font: fonts.regular,
         color: BRAND.dark,
       });
 
       page.drawText("Write Sample ID on pouch with non-erasable marker", {
         x: x + 8,
-        y: yTop - 138,
+        y: yTop - 140,
         size: 6.7,
         font: fonts.regular,
         color: BRAND.muted,
