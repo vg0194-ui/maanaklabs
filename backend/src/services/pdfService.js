@@ -233,8 +233,8 @@ function addContinuationPage(pdfDoc, fonts, logoImage, title, subTitle) {
   return page;
 }
 
-function drawSampleCard(page, fonts, sample, index, startY) {
-  const cardHeight = 88;
+async function drawSampleCard(pdfDoc, page, fonts, sample, index, startY) {
+  const cardHeight = 98;
   page.drawRectangle({
     x: PAGE_MARGIN,
     y: startY - cardHeight,
@@ -278,18 +278,42 @@ function drawSampleCard(page, fonts, sample, index, startY) {
     `Tests: ${safeText((sample.selectedTestNames || []).join(", "), "No tests selected")}`,
     PAGE_MARGIN + 10,
     startY - 62,
-    410,
-    8.5,
-    11
+    315,
+    8.3,
+    10
   );
 
+  const sampleBarcodeImage = await pdfDoc.embedPng(await createBarcodePngBuffer(sample.sampleId));
+  page.drawRectangle({
+    x: 388,
+    y: startY - 72,
+    width: 152,
+    height: 38,
+    color: rgb(1, 1, 1),
+    borderColor: BRAND.border,
+    borderWidth: 0.5,
+  });
+  page.drawImage(sampleBarcodeImage, {
+    x: 396,
+    y: startY - 62,
+    width: 136,
+    height: 16,
+  });
+  page.drawText(sample.sampleId, {
+    x: 411,
+    y: startY - 75,
+    size: 7.2,
+    font: fonts.regular,
+    color: BRAND.dark,
+  });
+
   if (sample.remarks) {
-    drawParagraph(page, fonts.regular, `Remarks: ${sample.remarks}`, 330, startY - 18, 205, 8.2, 10);
+    drawParagraph(page, fonts.regular, `Remarks: ${sample.remarks}`, 388, startY - 18, 145, 7.6, 9);
   }
 
   page.drawText(`Estimated Amount: ${formatCurrency(sample.estimatedAmount)}`, {
     x: 420,
-    y: Math.max(startY - 76, testsEndY - 4),
+    y: Math.max(startY - 86, testsEndY - 6),
     size: 8.5,
     font: fonts.bold,
     color: BRAND.blue,
@@ -302,6 +326,7 @@ async function addRequestLetterPages(pdfDoc, fonts, logoImage, requestData) {
   const { request, user, payment, samples, settings } = requestData;
   let page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   drawHeader(page, fonts, "Request Letter", "Seed testing submission summary", logoImage);
+  const requestBarcodeImage = await pdfDoc.embedPng(await createBarcodePngBuffer(request.requestNumber));
 
   page.drawRectangle({ x: PAGE_MARGIN, y: 612, width: 250, height: 108, color: BRAND.light, borderColor: BRAND.border, borderWidth: 0.8 });
   page.drawRectangle({ x: 305, y: 612, width: 250, height: 108, color: BRAND.light, borderColor: BRAND.border, borderWidth: 0.8 });
@@ -318,6 +343,29 @@ async function addRequestLetterPages(pdfDoc, fonts, logoImage, requestData) {
   let leftY = 700;
   requestMeta.slice(0, 3).forEach(([label, value]) => {
     leftY = drawLabelValue(page, fonts, label, value, 54, leftY, 84, 145);
+  });
+
+  page.drawRectangle({
+    x: 54,
+    y: 620,
+    width: 190,
+    height: 30,
+    color: rgb(1, 1, 1),
+    borderColor: BRAND.border,
+    borderWidth: 0.5,
+  });
+  page.drawImage(requestBarcodeImage, {
+    x: 64,
+    y: 630,
+    width: 170,
+    height: 12,
+  });
+  page.drawText(request.requestNumber, {
+    x: 95,
+    y: 622,
+    size: 7.4,
+    font: fonts.regular,
+    color: BRAND.dark,
   });
 
   let rightY = 700;
@@ -414,14 +462,15 @@ async function addRequestLetterPages(pdfDoc, fonts, logoImage, requestData) {
   });
 
   let currentY = sampleSectionY - 18;
-  samples.forEach((sample, index) => {
+  for (let index = 0; index < samples.length; index += 1) {
+    const sample = samples[index];
     if (currentY < 160) {
       page = addContinuationPage(pdfDoc, fonts, logoImage, "Request Letter (Continued)", request.requestNumber);
       currentY = 720;
     }
 
-    currentY = drawSampleCard(page, fonts, sample, index, currentY);
-  });
+    currentY = await drawSampleCard(pdfDoc, page, fonts, sample, index, currentY);
+  }
 
   if (currentY < 165) {
     page = addContinuationPage(pdfDoc, fonts, logoImage, "Request Letter (Continued)", request.requestNumber);
