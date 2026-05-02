@@ -1,4 +1,4 @@
-import { CheckCircle2, FileText, FlaskConical, ShieldCheck, Sprout, Target } from "lucide-react";
+import { CheckCircle2, FileText, FlaskConical, ShieldCheck, Sprout } from "lucide-react";
 import { Link } from "react-router-dom";
 import HeroSection from "../../components/public/HeroSection";
 import SectionHeader from "../../components/public/SectionHeader";
@@ -28,36 +28,38 @@ const processSteps = [
 const assuranceCards = [
   {
     icon: ShieldCheck,
-    title: "Quality policy",
-    text: "At Maanak Labs, we are committed to precision and excellence in seed testing services and to continuous improvement of laboratory operations.",
+    title: "Accurate and scientific testing",
+    text: "Every sample is handled with precision using scientific seed testing methods for dependable decision-making.",
   },
   {
     icon: Target,
-    title: "Lab mission",
-    text: "Assuring the quality of seed lots for seed trade through disciplined, scientific, and dependable testing support.",
+    title: "Fast turnaround time",
+    text: "Quick and reliable testing support helps seed industries plan dispatch, storage, and sales without unnecessary delay.",
   },
   {
     icon: FileText,
-    title: "Scientific quality systems",
-    text: "The lab follows scientific seed testing procedures and quality systems, with accreditation information shown only as placeholder status until officially updated.",
+    title: "Clear and structured reports",
+    text: "Results are presented in an organized format so seed companies and trade partners can act on them confidently.",
   },
 ];
 
-const purposeCards = [
-  {
-    icon: FlaskConical,
-    title: "World-class testing methods",
-    text: "Provide world-class seed testing services according to ISTA standard methods with professional reporting and practical dispatch guidance.",
-  },
-  {
-    icon: Sprout,
-    title: "Research platform for seed life",
-    text: "Use the laboratory as a research platform to enquire into and improve seed life inside and outside seed cold storage.",
-  },
+const whoWeServe = [
+  "Seed Companies",
+  "Seed Producers and Processors",
+  "Distributors and Dealers",
+  "Exporters",
+  "Institutional Buyers",
+];
+
+const objectives = [
+  "Test seed lots before dispatch",
+  "Plan storage efficiently",
+  "Maintain quality consistency",
+  "Reduce risk in the market",
 ];
 
 function HomePage() {
-  const { services, settings } = useSiteData();
+  const { services } = useSiteData();
   const activeServices = services.filter((service) => service.isActive !== false);
 
   return (
@@ -69,7 +71,7 @@ function HomePage() {
           <SectionHeader
             eyebrow="Our services"
             title="Seed testing services for routine lot release, storage decisions, and quality assurance"
-            description="These services help seed companies and trade partners check germination, purity, moisture, vigour, health, and related quality factors before dispatch or storage."
+            description="We provide testing support for germination, physical purity, moisture, vigour, seed health, and related seed quality checks required for lot planning."
           />
           <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             {activeServices.slice(0, 8).map((service) => (
@@ -83,8 +85,8 @@ function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader
             eyebrow="Laboratory assurance"
-            title="Why seed industries rely on dependable testing support"
-            description="Every section is built around practical lot testing, clear sample handling, and reporting that supports real dispatch and storage decisions."
+            title="Why Maanak Labs"
+            description="We focus on accuracy, speed, transparency, and ease so the testing process stays smooth and practical for the seed industry."
           />
           <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
             <div className="grid gap-6">
@@ -102,16 +104,18 @@ function HomePage() {
             </div>
             <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
               <img
-                src="https://images.unsplash.com/photo-1457530378978-8bac673b8062?auto=format&fit=crop&w=1400&q=80"
-                alt="Seed analysis and laboratory documentation"
+                src="/images/maanak-germination-tray-2.jpeg"
+                alt="Seed germination evaluation at Maanak Labs"
                 className="h-80 w-full object-cover"
               />
               <div className="p-7">
-                <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-blue">Compliance note</p>
+                <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-blue">Quality policy</p>
                 <p className="mt-4 text-sm leading-7 text-slate-600">
-                  {settings?.compliance?.scientificProceduresNote}
+                  At Maanak Labs, we are committed to precision and excellence in seed testing services.
                 </p>
-                <p className="mt-4 text-sm leading-7 text-slate-600">{settings?.compliance?.accreditationStatus}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Continuous improvement of our laboratory operations remains part of our working approach.
+                </p>
               </div>
             </div>
           </div>
@@ -122,32 +126,48 @@ function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader
             eyebrow="Laboratory purpose"
-            title="Testing service for seed trade and research-driven improvement"
-            description="The laboratory is meant to support day-to-day seed business decisions while also improving understanding of seed performance during storage and handling."
+            title="Built to support better seed decisions before lots reach the market"
+            description="Our goal is simple: help you make confident decisions about your seed lots before they move into dispatch, storage, or sale."
           />
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
-            {purposeCards.map((item) => {
-              const Icon = item.icon;
+            <article className="panel overflow-hidden p-0">
+              <img
+                src="/images/maanak-lab-setup.jpeg"
+                alt="Maanak Labs laboratory setup"
+                className="h-60 w-full object-cover"
+              />
+              <div className="p-7">
+                <FlaskConical className="h-6 w-6 text-brand-green" />
+                <h3 className="mt-4 text-2xl font-bold">Who We Serve</h3>
+                <div className="mt-4 grid gap-3">
+                  {whoWeServe.map((item) => (
+                    <div key={item} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </article>
 
-              return (
-                <article key={item.title} className="panel overflow-hidden p-0">
-                  <img
-                    src={
-                      item.title === "World-class testing methods"
-                        ? "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1400&q=80"
-                        : "https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=1400&q=80"
-                    }
-                    alt={item.title}
-                    className="h-60 w-full object-cover"
-                  />
-                  <div className="p-7">
-                    <Icon className="h-6 w-6 text-brand-green" />
-                    <h3 className="mt-4 text-2xl font-bold">{item.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-600">{item.text}</p>
-                  </div>
-                </article>
-              );
-            })}
+            <article className="panel overflow-hidden p-0">
+              <img
+                src="/images/maanak-seed-vigor.jpg"
+                alt="Seed vigor comparison samples"
+                className="h-60 w-full object-cover"
+              />
+              <div className="p-7">
+                <Sprout className="h-6 w-6 text-brand-green" />
+                <h3 className="mt-4 text-2xl font-bold">Our Objective</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">To help industries:</p>
+                <div className="mt-4 grid gap-3">
+                  {objectives.map((item) => (
+                    <div key={item} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </article>
           </div>
         </div>
       </section>
@@ -184,24 +204,24 @@ function HomePage() {
             <SectionHeader
               eyebrow="Why this flow works"
               title="Simple for users, useful for real laboratory operations"
-              description="The flow keeps sample submission easy for clients while giving the lab the details needed to receive, test, report, and track each lot properly."
+              description="The process is designed for seed companies and trade partners who need clarity, speed, and traceability from request creation to report delivery."
             />
             <div className="mt-8 grid gap-4">
               {[
                 {
                   icon: CheckCircle2,
-                  title: "Clear document flow",
-                  text: "Users get request letters, sample slips, and address labels in a predictable format after payment.",
+                  title: "Easy online request system",
+                  text: "Lot details, selected tests, payment, and document downloads are all kept in one structured workflow.",
                 },
                 {
                   icon: ShieldCheck,
-                  title: "Controlled status tracking",
-                  text: "Sample awaited, sample received, under testing, and reporting stages are visible in one place.",
+                  title: "Designed for seed industry needs",
+                  text: "The process supports lot testing before dispatch so industries can plan storage and supply decisions properly.",
                 },
                 {
                   icon: FileText,
-                  title: "Professional communication",
-                  text: "The language, page structure, and sample guidance are designed to reassure seed companies and trade partners.",
+                  title: "Traceable status updates",
+                  text: "Sample awaited, sample received, under testing, report generated, and completed stages remain visible throughout the request cycle.",
                 },
               ].map((item) => {
                 const Icon = item.icon;

@@ -2,9 +2,9 @@ module.exports = {
   siteName: "Maanak Labs",
   siteTagline: "A Unit of Entorno Greens Seeds Private Limited",
   homeIntro:
-    "Maanak Labs is a seed testing laboratory focused on dependable, scientifically managed testing support for farmers, dealers, distributors, and seed companies.",
+    "Maanak Labs helps you test your seed lots quickly and reliably so you can plan dispatch, storage, and sales with confidence.",
   aboutContent:
-    "We provide structured seed quality evaluation services with a strong emphasis on clarity, sample traceability, responsive communication, and farmer-friendly guidance.",
+    "Maanak Labs is a dedicated seed testing laboratory committed to delivering accurate, reliable, and timely seed quality analysis for seed companies, producers, processors, distributors, dealers, and institutional buyers.",
   contactDetails: {
     address:
       "Maanak Labs, Entorno Greens Campus, Akhepura, Delhi-Jaipur 200ft Bypass, VKI, Jaipur 302013, Rajasthan",
