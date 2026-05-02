@@ -4,11 +4,11 @@ import { useSiteData } from "../../contexts/SiteDataContext";
 const profileCards = [
   {
     title: "Vision",
-    text: "To be a trusted seed testing laboratory known for scientific accuracy, practical service, and confidence-building support for seed trade stakeholders.",
+    text: "To be a trusted seed testing laboratory that helps the seed industry release better lots to the market with confidence.",
   },
   {
     title: "Mission",
-    text: "To assure the quality of seed lots for seed trade through disciplined testing systems, dependable reporting, and farmer-friendly sample handling guidance.",
+    text: "To provide accurate, hassle-free, and fast testing service so seed industries can plan dispatch and storage properly and maintain quality supply to the market.",
   },
 ];
 
@@ -26,27 +26,27 @@ function AboutPage() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="About Maanak Labs"
-          title="A professional seed testing laboratory platform designed for confidence"
-          description="Built to look credible to seed trade partners while staying understandable for growers, distributors, and other non-technical users."
+          title="A seed testing laboratory focused on practical industry use"
+          description="Maanak Labs is built to help seed businesses make timely decisions on lot release, storage planning, and market supply based on dependable test results."
         />
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.05fr,0.95fr]">
           <div className="panel overflow-hidden p-0">
             <img
-              src="https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&w=1400&q=80"
-              alt="Seed laboratory planning and documentation"
+              src="https://images.unsplash.com/photo-1483058712412-4245e9b90334?auto=format&fit=crop&w=1400&q=80"
+              alt="Seed sample records and laboratory planning"
               className="h-72 w-full object-cover"
             />
             <div className="p-8">
               <div className="space-y-6 text-base leading-8 text-slate-600">
                 <p>{settings?.aboutContent}</p>
                 <p>
-                  Our platform is built to help farmers, dealers, distributors, and seed companies submit testing
-                  requests online, understand how to withdraw and pack representative samples, and track progress from
-                  submission through reporting.
+                  The main objective of this laboratory is to provide accurate, hassle-free, and fast testing service
+                  for seed industries so they can have their lots tested and plan dispatch and storage accordingly.
                 </p>
                 <p>
-                  The laboratory follows scientific seed testing procedures and quality systems. NABL and ISO/IEC 17025
-                  information is shown only as placeholder status until official accreditation details are available.
+                  By doing this, seed industries are better placed to supply high-quality seeds to the market. The
+                  laboratory follows scientific seed testing procedures and quality systems, while sample submission and
+                  dispatch guidance remain simple for users.
                 </p>
               </div>
             </div>

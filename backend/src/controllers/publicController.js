@@ -54,11 +54,11 @@ const getPublicContent = asyncHandler(async (_req, res) => {
     };
   });
 
-  const rates = [...rateMap.values()];
+  const rates = [...rateMap.values()].filter((rate) => rate.isActive && rate.service?.isActive);
 
   res.json({
     success: true,
-    services: serviceRows,
+    services: serviceRows.filter((service) => service.isActive),
     rates,
     settings,
     blogs: blogs.map((blog) => ({

@@ -58,6 +58,7 @@ const purposeCards = [
 
 function HomePage() {
   const { services, settings } = useSiteData();
+  const activeServices = services.filter((service) => service.isActive !== false);
 
   return (
     <>
@@ -67,11 +68,11 @@ function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader
             eyebrow="Our services"
-            title="Seed testing services presented in a clear, professional format"
-            description="Explore core laboratory services with sample requirements and expected testing timelines, designed for seed companies, distributors, dealers, and growers."
+            title="Seed testing services for routine lot release, storage decisions, and quality assurance"
+            description="These services help seed companies and trade partners check germination, purity, moisture, vigour, health, and related quality factors before dispatch or storage."
           />
           <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {services.slice(0, 8).map((service) => (
+            {activeServices.slice(0, 8).map((service) => (
               <ServiceCard key={service._id} service={service} />
             ))}
           </div>
@@ -82,8 +83,8 @@ function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader
             eyebrow="Laboratory assurance"
-            title="Professional laboratory values presented with clarity"
-            description="The website experience now reflects the same confidence, structure, and trust expected from a modern seed testing laboratory."
+            title="Why seed industries rely on dependable testing support"
+            description="Every section is built around practical lot testing, clear sample handling, and reporting that supports real dispatch and storage decisions."
           />
           <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
             <div className="grid gap-6">
@@ -101,8 +102,8 @@ function HomePage() {
             </div>
             <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
               <img
-                src="https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=1400&q=80"
-                alt="Seed laboratory analysis team"
+                src="https://images.unsplash.com/photo-1457530378978-8bac673b8062?auto=format&fit=crop&w=1400&q=80"
+                alt="Seed analysis and laboratory documentation"
                 className="h-80 w-full object-cover"
               />
               <div className="p-7">
@@ -121,8 +122,8 @@ function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader
             eyebrow="Laboratory purpose"
-            title="Built for both dependable testing and practical seed research"
-            description="The platform should feel trustworthy to commercial clients while still reflecting scientific curiosity and long-term seed quality improvement."
+            title="Testing service for seed trade and research-driven improvement"
+            description="The laboratory is meant to support day-to-day seed business decisions while also improving understanding of seed performance during storage and handling."
           />
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
             {purposeCards.map((item) => {
@@ -133,8 +134,8 @@ function HomePage() {
                   <img
                     src={
                       item.title === "World-class testing methods"
-                        ? "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&w=1400&q=80"
-                        : "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1400&q=80"
+                        ? "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1400&q=80"
+                        : "https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=1400&q=80"
                     }
                     alt={item.title}
                     className="h-60 w-full object-cover"
@@ -182,8 +183,8 @@ function HomePage() {
           <div className="panel p-8">
             <SectionHeader
               eyebrow="Why this flow works"
-              title="A farmer-friendly experience without losing laboratory discipline"
-              description="The site keeps the steps understandable for non-technical users while preserving traceability, documentation, and testing control for the laboratory."
+              title="Simple for users, useful for real laboratory operations"
+              description="The flow keeps sample submission easy for clients while giving the lab the details needed to receive, test, report, and track each lot properly."
             />
             <div className="mt-8 grid gap-4">
               {[

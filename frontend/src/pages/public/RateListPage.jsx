@@ -4,6 +4,7 @@ import { formatCurrency, formatDate } from "../../utils/formatters";
 
 function RateListPage() {
   const { rates } = useSiteData();
+  const activeRates = rates.filter((rate) => rate.isActive !== false && rate.service?.isActive !== false);
 
   return (
     <section className="py-16">
@@ -11,7 +12,7 @@ function RateListPage() {
         <SectionHeader
           eyebrow="Rate list"
           title="Current testing rates"
-          description="Admin can maintain service-wise rates, optional crop-wise pricing, GST percentage, effective date, and history."
+          description="Only rates that are currently active in the admin panel are shown here for public reference."
         />
         <div className="panel mt-10 overflow-hidden">
           <div className="overflow-x-auto">
@@ -26,7 +27,7 @@ function RateListPage() {
                 </tr>
               </thead>
               <tbody>
-                {rates.map((rate) => (
+                {activeRates.map((rate) => (
                   <tr key={rate._id} className="border-t border-slate-100">
                     <td className="px-6 py-4 font-medium text-slate-800">{rate.service?.name || "Service"}</td>
                     <td className="px-6 py-4">{rate.crop || "All crops"}</td>
@@ -45,4 +46,3 @@ function RateListPage() {
 }
 
 export default RateListPage;
-

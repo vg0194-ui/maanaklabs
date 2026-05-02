@@ -4,9 +4,9 @@ import { useSiteData } from "../../contexts/SiteDataContext";
 import BrandLogo from "./BrandLogo";
 
 const heroStats = [
-  { label: "Scientific workflow", icon: ShieldCheck },
-  { label: "Reliable testing support", icon: BadgeCheck },
-  { label: "Research-oriented lab culture", icon: Microscope },
+  { label: "Accurate seed testing", icon: ShieldCheck },
+  { label: "Fast report support", icon: BadgeCheck },
+  { label: "Storage and dispatch planning", icon: Microscope },
 ];
 
 function HeroSection() {
@@ -23,14 +23,14 @@ function HeroSection() {
           />
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white px-4 py-2 text-sm font-semibold text-brand-green shadow-sm">
             <BadgeCheck className="h-4 w-4" />
-            Precision and excellence in seed testing services
+            Accurate, hassle-free, and fast testing service for seed industries
           </div>
           <h1 className="mt-6 max-w-3xl text-5xl font-extrabold leading-tight sm:text-6xl">
-            A professional seed testing laboratory website built around trust, quality, and scientific clarity.
+            Testing support that helps seed industries plan dispatch, storage, and market supply with confidence.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
             {settings?.homeIntro ||
-              "Maanak Labs supports seed companies, traders, distributors, and growers with a clean online request flow, clear sample dispatch guidance, and a modern lab-focused digital experience."}
+              "The main objective of Maanak Labs is to provide accurate, hassle-free, and fast seed testing service so industries can test their lots, plan dispatch and storage properly, and supply high-quality seeds to the market."}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link to="/dashboard/new-request" className="btn-primary gap-2">
@@ -57,8 +57,8 @@ function HeroSection() {
         <div className="grid gap-5">
           <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
             <img
-              src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
-              alt="Seed laboratory workspace"
+              src="https://images.unsplash.com/photo-1512428813834-c702c7702b78?auto=format&fit=crop&w=1200&q=80"
+              alt="Seed testing samples in a laboratory setting"
               className="h-72 w-full object-cover"
             />
             <div className="grid gap-4 p-6 md:grid-cols-[1.1fr,0.9fr]">
@@ -84,8 +84,8 @@ function HeroSection() {
           <div className="grid gap-5 md:grid-cols-2">
             <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
               <img
-                src="https://images.unsplash.com/photo-1532187643603-ba119ca4109e?auto=format&fit=crop&w=1200&q=80"
-                alt="Seed testing instruments"
+                src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1200&q=80"
+                alt="Seeds being observed for testing and evaluation"
                 className="h-48 w-full object-cover"
               />
               <div className="p-5">
@@ -98,8 +98,8 @@ function HeroSection() {
 
             <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
               <img
-                src="https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=1200&q=80"
-                alt="Laboratory research analysis"
+                src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80"
+                alt="Seed quality research and storage study"
                 className="h-48 w-full object-cover"
               />
               <div className="p-5">
