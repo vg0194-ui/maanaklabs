@@ -1,4 +1,4 @@
-import { CheckCircle2, FileText, FlaskConical, ShieldCheck, Sprout } from "lucide-react";
+import { CheckCircle2, FileText, FlaskConical, ShieldCheck, Sprout, Target } from "lucide-react";
 import { Link } from "react-router-dom";
 import HeroSection from "../../components/public/HeroSection";
 import SectionHeader from "../../components/public/SectionHeader";
