@@ -12,15 +12,21 @@ function triggerBrowserDownload(url, fileName) {
 }
 
 export async function apiFetch(path, { method = "GET", body, token, headers = {} } = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (_error) {
+    throw new Error("Unable to reach the server. Please try again in a moment.");
+  }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {

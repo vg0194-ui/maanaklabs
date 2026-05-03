@@ -17,9 +17,34 @@ const { handleWebhook } = require("./controllers/paymentController");
 
 const app = express();
 
+const defaultAllowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://maanaklabs.com",
+  "https://www.maanaklabs.com",
+  "https://maanaklabs-frontend.onrender.com",
+];
+
+const configuredOrigins = [
+  process.env.CLIENT_URL,
+  process.env.CLIENT_URLS,
+]
+  .filter(Boolean)
+  .flatMap((value) => value.split(","))
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([...defaultAllowedOrigins, ...configuredOrigins]);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   })
 );
