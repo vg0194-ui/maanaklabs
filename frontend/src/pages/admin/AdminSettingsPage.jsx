@@ -93,7 +93,7 @@ function AdminSettingsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-3xl border border-slate-200 p-5">
               <h3 className="text-base font-bold">Request ID format</h3>
-              <p className="mt-2 text-sm text-slate-600">Example: `PREFIX-2026-0001-SUFFIX`</p>
+              <p className="mt-2 text-sm text-slate-600">Example: `PREFIX-0526-0001-SUFFIX`</p>
               <div className="mt-4 grid gap-3">
                 <input
                   className="field"
@@ -120,7 +120,7 @@ function AdminSettingsPage() {
 
             <div className="rounded-3xl border border-slate-200 p-5">
               <h3 className="text-base font-bold">Sample ID format</h3>
-              <p className="mt-2 text-sm text-slate-600">Example: `PREFIX-2026-0001-A-SUFFIX`</p>
+              <p className="mt-2 text-sm text-slate-600">Example: `PREFIX-0526-0001-A-SUFFIX`</p>
               <div className="mt-4 grid gap-3">
                 <input
                   className="field"

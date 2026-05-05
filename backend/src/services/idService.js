@@ -35,27 +35,37 @@ function buildIdentifierConfig(settings = {}) {
   };
 }
 
-function formatIdentifier({ prefix, year, sequence, suffix, padding }) {
-  return [prefix, year, String(sequence).padStart(padding, "0"), suffix].filter(Boolean).join("-");
+function getPeriodToken(date = new Date()) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = String(date.getFullYear()).slice(-2);
+  return `${month}${year}`;
 }
 
-async function getCurrentSequence(key, year) {
-  const counter = await Counter.findOne({ key, year }).lean();
+function getPeriodScopeValue(date = new Date()) {
+  return Number(getPeriodToken(date));
+}
+
+function formatIdentifier({ prefix, periodToken, sequence, suffix, padding }) {
+  return [prefix, periodToken, String(sequence).padStart(padding, "0"), suffix].filter(Boolean).join("-");
+}
+
+async function getCurrentSequence(key, periodScope) {
+  const counter = await Counter.findOne({ key, year: periodScope }).lean();
   return Number(counter?.sequence || 0);
 }
 
 async function getNextSeriesValue(key, date = new Date()) {
-  const year = date.getFullYear();
-  const sequence = await getCurrentSequence(key, year);
+  const periodScope = getPeriodScopeValue(date);
+  const sequence = await getCurrentSequence(key, periodScope);
   return sequence + 1 || 1;
 }
 
 async function setNextSeriesValue(key, nextSeries, date = new Date()) {
-  const year = date.getFullYear();
+  const periodScope = getPeriodScopeValue(date);
   const normalizedSeries = Math.max(1, Number(nextSeries) || 1);
 
   await Counter.findOneAndUpdate(
-    { key, year },
+    { key, year: periodScope },
     { $set: { sequence: normalizedSeries - 1 } },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
@@ -68,11 +78,11 @@ async function getIdentifierSettings() {
   return buildIdentifierConfig(settings);
 }
 
-async function getNextSequence(key, year, startAt = 1) {
+async function getNextSequence(key, periodScope, startAt = 1) {
   const normalizedStart = Math.max(1, Number(startAt) || 1);
 
   const counter = await Counter.findOneAndUpdate(
-    { key, year },
+    { key, year: periodScope },
     {
       $setOnInsert: { sequence: normalizedStart - 1 },
       $inc: { sequence: 1 },
@@ -84,13 +94,14 @@ async function getNextSequence(key, year, startAt = 1) {
 }
 
 async function generateRequestNumber(date = new Date()) {
-  const year = date.getFullYear();
+  const periodToken = getPeriodToken(date);
+  const periodScope = getPeriodScopeValue(date);
   const config = (await getIdentifierSettings()).request;
-  const sequence = await getNextSequence("request", year, await getNextSeriesValue("request", date));
+  const sequence = await getNextSequence("request", periodScope, await getNextSeriesValue("request", date));
 
   return formatIdentifier({
     prefix: config.prefix,
-    year,
+    periodToken,
     sequence,
     suffix: config.suffix,
     padding: config.padding,
@@ -103,13 +114,14 @@ async function generateSampleId(date = new Date(), suffix = "A") {
 }
 
 async function generateSampleSeries(date = new Date()) {
-  const year = date.getFullYear();
+  const periodToken = getPeriodToken(date);
+  const periodScope = getPeriodScopeValue(date);
   const config = (await getIdentifierSettings()).sample;
-  const sequence = await getNextSequence("sample", year, await getNextSeriesValue("sample", date));
+  const sequence = await getNextSequence("sample", periodScope, await getNextSeriesValue("sample", date));
 
   return formatIdentifier({
     prefix: config.prefix,
-    year,
+    periodToken,
     sequence,
     suffix: "",
     padding: config.padding,
@@ -122,13 +134,14 @@ async function buildSampleIdFromSeries(sampleSeries, perSampleSuffix = "A") {
 }
 
 async function generateReceiptNumber(date = new Date()) {
-  const year = date.getFullYear();
+  const periodToken = getPeriodToken(date);
+  const periodScope = getPeriodScopeValue(date);
   const config = (await getIdentifierSettings()).receipt;
-  const sequence = await getNextSequence("receipt", year, await getNextSeriesValue("receipt", date));
+  const sequence = await getNextSequence("receipt", periodScope, await getNextSeriesValue("receipt", date));
 
   return formatIdentifier({
     prefix: config.prefix,
-    year,
+    periodToken,
     sequence,
     suffix: config.suffix,
     padding: config.padding,
