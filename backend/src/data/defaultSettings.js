@@ -23,4 +23,14 @@ module.exports = {
     iso17025Note:
       "ISO/IEC 17025 is the internationally recognized competence standard relevant to testing laboratories. Scope and status will be updated after formal confirmation.",
   },
+  identifierConfig: {
+    request: {
+      prefix: "ML-REQ",
+      suffix: "",
+    },
+    sample: {
+      prefix: "ML-SMP",
+      suffix: "",
+    },
+  },
 };

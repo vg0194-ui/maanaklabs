@@ -34,7 +34,7 @@ function AboutPage() {
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.05fr,0.95fr]">
           <div className="panel overflow-hidden p-0">
             <img
-              src="/images/maanak-lab-setup.jpeg"
+              src="/images/maanak-lab-interior.jpeg"
               alt="Complete Maanak Labs setup"
               className="h-72 w-full object-cover"
             />

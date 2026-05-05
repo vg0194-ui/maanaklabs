@@ -12,6 +12,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const slugify = require("../utils/slugify");
 const { sanitizeBlogContent, sanitizePlainText } = require("../utils/blogSanitizer");
+const { buildIdentifierConfig, getNextSeriesValue, setNextSeriesValue } = require("../services/idService");
 
 const uploadStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, path.join(__dirname, "..", "..", "uploads", "reports")),
@@ -315,14 +316,82 @@ const updateUserStatus = asyncHandler(async (req, res) => {
 
 const getSettings = asyncHandler(async (_req, res) => {
   const settings = await WebsiteSettings.findOne().lean();
-  res.json({ success: true, settings });
+  const identifierConfig = buildIdentifierConfig(settings);
+  const [requestNextSeries, sampleNextSeries] = await Promise.all([
+    getNextSeriesValue("request"),
+    getNextSeriesValue("sample"),
+  ]);
+
+  res.json({
+    success: true,
+    settings: {
+      ...settings,
+      identifierConfig: {
+        request: {
+          ...identifierConfig.request,
+          nextSeries: requestNextSeries,
+        },
+        sample: {
+          ...identifierConfig.sample,
+          nextSeries: sampleNextSeries,
+        },
+      },
+    },
+  });
 });
 
 const updateSettings = asyncHandler(async (req, res) => {
   const existing = await WebsiteSettings.findOne();
-  const { _id, createdAt, updatedAt, __v, ...payload } = req.body;
-  const settings = await WebsiteSettings.findByIdAndUpdate(existing._id, payload, { new: true, runValidators: true });
-  res.json({ success: true, settings });
+  const { _id, createdAt, updatedAt, __v, identifierConfig, ...payload } = req.body;
+  const normalizedIdentifierConfig = buildIdentifierConfig({ identifierConfig });
+
+  const settings = await WebsiteSettings.findByIdAndUpdate(
+    existing._id,
+    {
+      ...payload,
+      identifierConfig: {
+        request: {
+          prefix: normalizedIdentifierConfig.request.prefix,
+          suffix: normalizedIdentifierConfig.request.suffix,
+        },
+        sample: {
+          prefix: normalizedIdentifierConfig.sample.prefix,
+          suffix: normalizedIdentifierConfig.sample.suffix,
+        },
+      },
+    },
+    { new: true, runValidators: true }
+  );
+
+  if (identifierConfig?.request?.nextSeries !== undefined) {
+    await setNextSeriesValue("request", identifierConfig.request.nextSeries);
+  }
+
+  if (identifierConfig?.sample?.nextSeries !== undefined) {
+    await setNextSeriesValue("sample", identifierConfig.sample.nextSeries);
+  }
+
+  const [requestNextSeries, sampleNextSeries] = await Promise.all([
+    getNextSeriesValue("request"),
+    getNextSeriesValue("sample"),
+  ]);
+
+  res.json({
+    success: true,
+    settings: {
+      ...settings.toObject(),
+      identifierConfig: {
+        request: {
+          ...normalizedIdentifierConfig.request,
+          nextSeries: requestNextSeries,
+        },
+        sample: {
+          ...normalizedIdentifierConfig.sample,
+          nextSeries: sampleNextSeries,
+        },
+      },
+    },
+  });
 });
 
 const listBlogs = asyncHandler(async (_req, res) => {

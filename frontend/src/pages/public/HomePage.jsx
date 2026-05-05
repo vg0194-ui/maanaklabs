@@ -132,7 +132,7 @@ function HomePage() {
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
             <article className="panel overflow-hidden p-0">
               <img
-                src="/images/maanak-lab-setup.jpeg"
+                src="/images/maanak-lab-interior.jpeg"
                 alt="Maanak Labs laboratory setup"
                 className="h-60 w-full object-cover"
               />

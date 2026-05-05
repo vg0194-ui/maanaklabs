@@ -57,7 +57,7 @@ function HeroSection() {
         <div className="grid gap-5">
           <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
             <img
-              src="/images/maanak-lab-setup.jpeg"
+              src="/images/maanak-lab-interior.jpeg"
               alt="Maanak Labs laboratory setup"
               className="h-72 w-full object-cover"
             />

@@ -5,7 +5,7 @@ const Service = require("../models/Service");
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
-const { generateRequestNumber, generateSampleSeries } = require("../services/idService");
+const { generateRequestNumber, generateSampleSeries, buildSampleIdFromSeries } = require("../services/idService");
 const { calculateRequestPricing } = require("../services/pricingService");
 
 function normalizeAddress(address = {}) {
@@ -145,7 +145,7 @@ const createRequest = asyncHandler(async (req, res) => {
   const sampleDocs = [];
   for (let index = 0; index < pricing.enrichedSamples.length; index += 1) {
     const sample = pricing.enrichedSamples[index];
-    const sampleId = `${sampleSeries}-${String.fromCharCode(65 + index)}`;
+    const sampleId = await buildSampleIdFromSeries(sampleSeries, String.fromCharCode(65 + index));
 
     sampleDocs.push({
       request: request._id,

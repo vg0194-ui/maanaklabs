@@ -10,7 +10,7 @@ const serviceImageMap = {
   "genetic-purity-test": "https://images.unsplash.com/photo-1532187643603-ba119ca4109e?auto=format&fit=crop&w=1200&q=80",
   "grow-out-test": "/images/maanak-grow-out-test.jpg",
   "other-seed-quality-tests": "/images/maanak-germination-tray-1.jpeg",
-  default: "/images/maanak-lab-setup.jpeg",
+  default: "/images/maanak-lab-interior.jpeg",
 };
 
 function getServiceImage(service) {
