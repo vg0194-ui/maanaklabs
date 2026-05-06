@@ -224,15 +224,7 @@ function NewRequestPage() {
                     <option key={option}>{option}</option>
                   ))}
                 </select>
-                <input
-                  type="number"
-                  min="1"
-                  className="field"
-                  placeholder="Number of samples"
-                  value={sample.numberOfSamples}
-                  onChange={(event) => updateSample(index, "numberOfSamples", Number(event.target.value))}
-                />
-                <textarea className="field md:col-span-2 xl:col-span-2 min-h-24" placeholder="Sample remarks" value={sample.remarks} onChange={(event) => updateSample(index, "remarks", event.target.value)} />
+                <textarea className="field md:col-span-2 xl:col-span-3 min-h-24" placeholder="Sample remarks" value={sample.remarks} onChange={(event) => updateSample(index, "remarks", event.target.value)} />
               </div>
 
               <div className="mt-6">

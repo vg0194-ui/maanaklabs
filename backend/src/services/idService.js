@@ -80,17 +80,29 @@ async function getIdentifierSettings() {
 
 async function getNextSequence(key, periodScope, startAt = 1) {
   const normalizedStart = Math.max(1, Number(startAt) || 1);
+  const query = { key, year: periodScope };
 
-  const counter = await Counter.findOneAndUpdate(
-    { key, year: periodScope },
-    {
-      $setOnInsert: { sequence: normalizedStart - 1 },
-      $inc: { sequence: 1 },
-    },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
+  const existingCounter = await Counter.findOne(query).lean();
+  if (existingCounter) {
+    const counter = await Counter.findOneAndUpdate(query, { $inc: { sequence: 1 } }, { new: true });
+    return counter.sequence;
+  }
 
-  return counter.sequence;
+  try {
+    const counter = await Counter.create({
+      ...query,
+      sequence: normalizedStart,
+    });
+
+    return counter.sequence;
+  } catch (error) {
+    if (error?.code !== 11000) {
+      throw error;
+    }
+
+    const counter = await Counter.findOneAndUpdate(query, { $inc: { sequence: 1 } }, { new: true });
+    return counter.sequence;
+  }
 }
 
 async function generateRequestNumber(date = new Date()) {
