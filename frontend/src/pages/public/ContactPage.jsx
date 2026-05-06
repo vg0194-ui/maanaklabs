@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Mail, MapPin, Phone } from "lucide-react";
 import SectionHeader from "../../components/public/SectionHeader";
 import { useSiteData } from "../../contexts/SiteDataContext";
+import { apiFetch } from "../../api/client";
 
 const DEFAULT_LAB_ADDRESS =
   "Maanak Labs, Entorno Greens Campus, Akhepura, Delhi-Jaipur 200ft Bypass, VKI, Jaipur 302013, Rajasthan";
@@ -34,6 +35,7 @@ function ContactPage() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const contactDetails = {
     address: settings?.contactDetails?.address || DEFAULT_LAB_ADDRESS,
@@ -49,7 +51,7 @@ function ContactPage() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setSuccess("");
@@ -72,22 +74,35 @@ function ContactPage() {
       return;
     }
 
-    const subject = encodeURIComponent(`Maanak Labs enquiry from ${form.name.trim()}`);
-    const body = encodeURIComponent(
-      `Name: ${form.name.trim()}\nMobile: ${form.mobile.trim()}\nEmail: ${form.email.trim()}\n\nMessage:\n${form.message.trim()}`
-    );
+    setSubmitting(true);
 
-    window.location.href = `mailto:${contactDetails.email}?subject=${subject}&body=${body}`;
-    setSuccess("Your enquiry details are ready. Your email app should open now.");
-    setForm({
-      name: "",
-      mobile: "",
-      email: "",
-      message: "",
-      captchaAnswer: "",
-      website: "",
-    });
-    refreshCaptcha();
+    try {
+      const response = await apiFetch("/public/contact-enquiry", {
+        method: "POST",
+        body: {
+          name: form.name.trim(),
+          mobile: form.mobile.trim(),
+          email: form.email.trim(),
+          message: form.message.trim(),
+          website: form.website.trim(),
+        },
+      });
+
+      setSuccess(response.message || "Your enquiry has been sent successfully.");
+      setForm({
+        name: "",
+        mobile: "",
+        email: "",
+        message: "",
+        captchaAnswer: "",
+        website: "",
+      });
+      refreshCaptcha();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -205,8 +220,8 @@ function ContactPage() {
               {error ? <p className="text-sm font-semibold text-rose-600">{error}</p> : null}
               {success ? <p className="text-sm font-semibold text-emerald-700">{success}</p> : null}
 
-              <button type="submit" className="btn-primary">
-                Send enquiry
+              <button type="submit" className="btn-primary" disabled={submitting}>
+                {submitting ? "Sending enquiry..." : "Send enquiry"}
               </button>
             </form>
           </div>

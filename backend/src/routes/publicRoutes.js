@@ -6,6 +6,7 @@ const {
   verifyReport,
   getPackingGuidePdf,
   getSampleSizeGuidePdf,
+  submitContactEnquiry,
 } = require("../controllers/publicController");
 
 const router = express.Router();
@@ -16,5 +17,6 @@ router.get("/blogs/:slug", getBlogBySlug);
 router.get("/report-verification/:code", verifyReport);
 router.get("/sample-packing-guide.pdf", getPackingGuidePdf);
 router.get("/sample-size-guide.pdf", getSampleSizeGuidePdf);
+router.post("/contact-enquiry", submitContactEnquiry);
 
 module.exports = router;

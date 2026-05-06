@@ -343,7 +343,124 @@ async function sendRequestCreatedEmails({ request, samples, payment }) {
   };
 }
 
+function buildEnquiryAdminEmail(context) {
+  return {
+    subject: `New Website Enquiry - ${context.name}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.6;">
+        <h2 style="margin-bottom:8px;">New Website Enquiry Received</h2>
+        <p style="margin-top:0;">A quick enquiry has been submitted on the Maanak Labs website.</p>
+        <div style="padding:16px;border:1px solid #d7e0e5;border-radius:12px;background:#f8fbfb;margin:20px 0;">
+          <p><strong>Name:</strong> ${escapeHtml(context.name)}</p>
+          <p><strong>Email:</strong> ${escapeHtml(context.email)}</p>
+          <p><strong>Mobile:</strong> ${escapeHtml(context.mobile)}</p>
+          <p><strong>Message:</strong></p>
+          <p style="white-space:pre-wrap;">${escapeHtml(context.message)}</p>
+        </div>
+      </div>
+    `,
+    text: `New Website Enquiry Received
+
+Name: ${context.name}
+Email: ${context.email}
+Mobile: ${context.mobile}
+
+Message:
+${context.message}`,
+  };
+}
+
+function buildEnquiryUserEmail(context) {
+  return {
+    subject: "Enquiry Received - Maanak Labs",
+    html: `
+      <div style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.6;">
+        <h2 style="margin-bottom:8px;">Thank you for contacting Maanak Labs</h2>
+        <p style="margin-top:0;">Dear ${escapeHtml(context.name)},</p>
+        <p>We have received your enquiry and our team will review it shortly.</p>
+        <div style="padding:16px;border:1px solid #d7e0e5;border-radius:12px;background:#f8fbfb;margin:20px 0;">
+          <p><strong>Your message:</strong></p>
+          <p style="white-space:pre-wrap;">${escapeHtml(context.message)}</p>
+        </div>
+        <p>
+          <strong>Maanak Labs</strong><br />
+          ${escapeHtml(context.labContact.address)}<br />
+          ${escapeHtml(context.labContact.mobile)}<br />
+          ${escapeHtml(context.labContact.email)}
+        </p>
+      </div>
+    `,
+    text: `Thank you for contacting Maanak Labs
+
+Dear ${context.name},
+
+We have received your enquiry and our team will review it shortly.
+
+Your message:
+${context.message}
+
+Maanak Labs
+${context.labContact.address}
+${context.labContact.mobile}
+${context.labContact.email}`,
+  };
+}
+
+async function sendContactEnquiryEmails({ name, email, mobile, message }) {
+  if (!isMailConfigured()) {
+    return { skipped: true, reason: "SMTP not configured" };
+  }
+
+  const settings = await WebsiteSettings.findOne().lean();
+  const labContact = {
+    name: settings?.siteName || "Maanak Labs",
+    email: settings?.contactDetails?.email || process.env.LAB_CONTACT_EMAIL || process.env.SMTP_USER,
+    mobile: settings?.contactDetails?.mobile || process.env.LAB_CONTACT_MOBILE || "",
+    address: settings?.contactDetails?.address || "",
+  };
+
+  const context = {
+    name,
+    email,
+    mobile,
+    message,
+    labContact,
+  };
+
+  const adminMail = buildEnquiryAdminEmail(context);
+  const userMail = buildEnquiryUserEmail(context);
+
+  const tasks = [
+    sendEmail({
+      to: labContact.email,
+      subject: adminMail.subject,
+      html: adminMail.html,
+      text: adminMail.text,
+      replyTo: email,
+    }),
+  ];
+
+  if (email) {
+    tasks.push(
+      sendEmail({
+        to: email,
+        subject: userMail.subject,
+        html: userMail.html,
+        text: userMail.text,
+        replyTo: labContact.email,
+      })
+    );
+  }
+
+  const results = await Promise.allSettled(tasks);
+  return {
+    skipped: false,
+    results,
+  };
+}
+
 module.exports = {
   isMailConfigured,
   sendRequestCreatedEmails,
+  sendContactEnquiryEmails,
 };

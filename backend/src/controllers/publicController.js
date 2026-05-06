@@ -8,6 +8,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const { generatePackingGuidePdf, generateSampleSizeGuidePdf } = require("../services/pdfService");
 const { sanitizeBlogContent } = require("../utils/blogSanitizer");
+const { isMailConfigured, sendContactEnquiryEmails } = require("../services/mailService");
 
 async function getCurrentRateMap(activeServices) {
   const serviceIds = activeServices.map((service) => service._id);
@@ -148,6 +149,38 @@ const getSampleSizeGuidePdf = asyncHandler(async (_req, res) => {
   res.send(pdfBuffer);
 });
 
+const submitContactEnquiry = asyncHandler(async (req, res) => {
+  const name = (req.body?.name || "").trim();
+  const email = (req.body?.email || "").toLowerCase().trim();
+  const mobile = (req.body?.mobile || "").trim();
+  const message = (req.body?.message || "").trim();
+  const website = (req.body?.website || "").trim();
+
+  if (website) {
+    throw new ApiError(400, "Spam check failed");
+  }
+
+  if (!name || !email || !mobile || !message) {
+    throw new ApiError(400, "Name, email, mobile, and message are required");
+  }
+
+  if (!isMailConfigured()) {
+    throw new ApiError(503, "Email service is not configured yet");
+  }
+
+  await sendContactEnquiryEmails({
+    name,
+    email,
+    mobile,
+    message,
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Your enquiry has been sent successfully.",
+  });
+});
+
 module.exports = {
   getPublicContent,
   getServiceBySlug,
@@ -155,4 +188,5 @@ module.exports = {
   verifyReport,
   getPackingGuidePdf,
   getSampleSizeGuidePdf,
+  submitContactEnquiry,
 };
