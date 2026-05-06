@@ -9,16 +9,44 @@ const defaultSettings = require("../data/defaultSettings");
 
 async function bootstrapDefaults() {
   const adminEmail = (process.env.DEFAULT_ADMIN_EMAIL || "").toLowerCase();
+  const adminMobile = (process.env.DEFAULT_ADMIN_MOBILE || "9999999999").trim();
   if (adminEmail) {
-    const existingAdmin = await Admin.findOne({ email: adminEmail });
+    const existingAdmin = await Admin.findOne({
+      $or: [{ email: adminEmail }, { mobile: adminMobile }],
+    });
+
     if (!existingAdmin) {
       const passwordHash = await Admin.hashPassword(process.env.DEFAULT_ADMIN_PASSWORD || "ChangeMe123!");
       await Admin.create({
         name: process.env.DEFAULT_ADMIN_NAME || "Maanak Labs Admin",
         email: adminEmail,
-        mobile: process.env.DEFAULT_ADMIN_MOBILE || "9999999999",
+        mobile: adminMobile,
         passwordHash,
       });
+    } else if (existingAdmin.email === adminEmail || existingAdmin.mobile === adminMobile) {
+      const updates = {};
+
+      if (process.env.DEFAULT_ADMIN_NAME && existingAdmin.name !== process.env.DEFAULT_ADMIN_NAME) {
+        updates.name = process.env.DEFAULT_ADMIN_NAME;
+      }
+
+      if (existingAdmin.email !== adminEmail && adminEmail) {
+        const emailOwner = await Admin.findOne({ email: adminEmail, _id: { $ne: existingAdmin._id } });
+        if (!emailOwner) {
+          updates.email = adminEmail;
+        }
+      }
+
+      if (existingAdmin.mobile !== adminMobile && adminMobile) {
+        const mobileOwner = await Admin.findOne({ mobile: adminMobile, _id: { $ne: existingAdmin._id } });
+        if (!mobileOwner) {
+          updates.mobile = adminMobile;
+        }
+      }
+
+      if (Object.keys(updates).length) {
+        await Admin.findByIdAndUpdate(existingAdmin._id, updates, { new: true });
+      }
     }
   }
 
