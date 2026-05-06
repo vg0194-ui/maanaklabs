@@ -7,6 +7,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const { generateRequestNumber, generateSampleSeries, buildSampleIdFromSeries } = require("../services/idService");
 const { calculateRequestPricing } = require("../services/pricingService");
+const { sendRequestCreatedEmails } = require("../services/mailService");
 
 function normalizeAddress(address = {}) {
   return {
@@ -165,7 +166,7 @@ const createRequest = asyncHandler(async (req, res) => {
   }
 
   await Sample.insertMany(sampleDocs);
-  await Payment.findOneAndUpdate(
+  const payment = await Payment.findOneAndUpdate(
     { request: request._id, user: req.user._id },
     {
       request: request._id,
@@ -178,6 +179,17 @@ const createRequest = asyncHandler(async (req, res) => {
   );
 
   const createdSamples = await Sample.find({ request: request._id }).lean();
+
+  try {
+    await sendRequestCreatedEmails({
+      request,
+      samples: createdSamples,
+      payment,
+    });
+  } catch (mailError) {
+    console.error("Request created email failed:", mailError);
+  }
+
   res.status(201).json({ success: true, request, samples: createdSamples });
 });
 
