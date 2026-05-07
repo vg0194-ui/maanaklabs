@@ -1,14 +1,36 @@
 const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const WebsiteSettings = require("../models/WebsiteSettings");
 
 let transporterPromise;
+let resendClient;
 
 function isMailConfigured() {
+  return Boolean(isResendConfigured() || isSmtpConfigured());
+}
+
+function isResendConfigured() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.MAIL_FROM);
+}
+
+function isSmtpConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
+function getResendClient() {
+  if (!isResendConfigured()) {
+    return null;
+  }
+
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+
+  return resendClient;
+}
+
 function getTransporter() {
-  if (!isMailConfigured()) {
+  if (!isSmtpConfigured()) {
     return null;
   }
 
@@ -283,13 +305,35 @@ ${context.dashboardUrl ? `Track your request: ${context.dashboardUrl}` : ""}`,
 }
 
 async function sendEmail({ to, subject, html, text, replyTo }) {
+  const resend = getResendClient();
+  if (resend) {
+    const { data, error } = await resend.emails.send({
+      from: process.env.MAIL_FROM,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+      text,
+      replyTo,
+    });
+
+    if (error) {
+      const resendError = new Error(error.message || "Resend email send failed");
+      resendError.code = error.name || "RESEND_ERROR";
+      resendError.response = JSON.stringify(error);
+      resendError.command = "RESEND_SEND";
+      throw resendError;
+    }
+
+    return { skipped: false, provider: "resend", data };
+  }
+
   const transporter = getTransporter();
   if (!transporter) {
-    return { skipped: true };
+    return { skipped: true, provider: "none" };
   }
 
   const resolvedTransporter = await transporter;
-  await resolvedTransporter.sendMail({
+  const result = await resolvedTransporter.sendMail({
     from: process.env.MAIL_FROM || process.env.SMTP_USER,
     to,
     subject,
@@ -298,7 +342,7 @@ async function sendEmail({ to, subject, html, text, replyTo }) {
     replyTo,
   });
 
-  return { skipped: false };
+  return { skipped: false, provider: "smtp", data: { messageId: result.messageId } };
 }
 
 function normalizeMailError(error) {
