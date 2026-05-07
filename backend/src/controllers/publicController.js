@@ -168,12 +168,21 @@ const submitContactEnquiry = asyncHandler(async (req, res) => {
     throw new ApiError(503, "Email service is not configured yet");
   }
 
-  await sendContactEnquiryEmails({
-    name,
-    email,
-    mobile,
-    message,
-  });
+  try {
+    const mailResult = await sendContactEnquiryEmails({
+      name,
+      email,
+      mobile,
+      message,
+    });
+
+    if (mailResult?.failedCount) {
+      console.warn("Contact enquiry acknowledgement partially failed:", mailResult.results);
+    }
+  } catch (mailError) {
+    console.error("Contact enquiry email failed:", mailError?.details || mailError);
+    throw new ApiError(502, "Unable to send enquiry email right now. Please try again in a few minutes.");
+  }
 
   res.status(201).json({
     success: true,

@@ -120,11 +120,6 @@ async function generateRequestNumber(date = new Date()) {
   });
 }
 
-async function generateSampleId(date = new Date(), suffix = "A") {
-  const sampleSeries = await generateSampleSeries(date);
-  return buildSampleIdFromSeries(sampleSeries, suffix);
-}
-
 async function generateSampleSeries(date = new Date()) {
   const periodToken = getPeriodToken(date);
   const periodScope = getPeriodScopeValue(date);
@@ -140,9 +135,14 @@ async function generateSampleSeries(date = new Date()) {
   });
 }
 
-async function buildSampleIdFromSeries(sampleSeries, perSampleSuffix = "A") {
+async function buildSampleIdFromSeries(sampleSeries) {
   const config = (await getIdentifierSettings()).sample;
-  return [sampleSeries, perSampleSuffix, config.suffix].filter(Boolean).join("-");
+  return [sampleSeries, config.suffix].filter(Boolean).join("-");
+}
+
+async function generateSampleId(date = new Date()) {
+  const sampleSeries = await generateSampleSeries(date);
+  return buildSampleIdFromSeries(sampleSeries);
 }
 
 async function generateReceiptNumber(date = new Date()) {

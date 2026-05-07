@@ -18,6 +18,9 @@ function getTransporter() {
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT || 587),
         secure: String(process.env.SMTP_SECURE || "false").toLowerCase() === "true",
+        connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT || 15000),
+        greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT || 15000),
+        socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT || 20000),
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
@@ -298,6 +301,23 @@ async function sendEmail({ to, subject, html, text, replyTo }) {
   return { skipped: false };
 }
 
+function normalizeMailError(error) {
+  return {
+    message: error?.message || "Unknown email error",
+    code: error?.code || "",
+    response: error?.response || "",
+    command: error?.command || "",
+  };
+}
+
+function summarizeMailResults(results = [], labels = []) {
+  return results.map((result, index) => ({
+    label: labels[index] || `mail-${index + 1}`,
+    ok: result.status === "fulfilled",
+    ...(result.status === "fulfilled" ? { value: result.value } : { error: normalizeMailError(result.reason) }),
+  }));
+}
+
 async function sendRequestCreatedEmails({ request, samples, payment }) {
   if (!isMailConfigured()) {
     return { skipped: true, reason: "SMTP not configured" };
@@ -337,9 +357,15 @@ async function sendRequestCreatedEmails({ request, samples, payment }) {
   }
 
   const results = await Promise.allSettled(tasks);
+  const summary = summarizeMailResults(results, [
+    adminEmail ? "admin-notification" : null,
+    context.contactEmail ? "user-acknowledgement" : null,
+  ].filter(Boolean));
+
   return {
     skipped: false,
-    results,
+    results: summary,
+    failedCount: summary.filter((item) => !item.ok).length,
   };
 }
 
@@ -453,9 +479,19 @@ async function sendContactEnquiryEmails({ name, email, mobile, message }) {
   }
 
   const results = await Promise.allSettled(tasks);
+  const summary = summarizeMailResults(results, ["admin-enquiry", ...(email ? ["user-enquiry-acknowledgement"] : [])]);
+  const adminDelivery = summary[0];
+
+  if (!adminDelivery?.ok) {
+    const error = new Error(adminDelivery?.error?.message || "Failed to deliver enquiry email");
+    error.details = summary;
+    throw error;
+  }
+
   return {
     skipped: false,
-    results,
+    results: summary,
+    failedCount: summary.filter((item) => !item.ok).length,
   };
 }
 

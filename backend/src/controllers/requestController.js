@@ -5,7 +5,7 @@ const Service = require("../models/Service");
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
-const { generateRequestNumber, generateSampleSeries, buildSampleIdFromSeries } = require("../services/idService");
+const { generateRequestNumber, generateSampleId } = require("../services/idService");
 const { calculateRequestPricing } = require("../services/pricingService");
 const { sendRequestCreatedEmails } = require("../services/mailService");
 
@@ -101,7 +101,6 @@ const createRequest = asyncHandler(async (req, res) => {
   });
 
   const requestNumber = await generateRequestNumber();
-  const sampleSeries = await generateSampleSeries();
   const pricing = await calculateRequestPricing(samples);
 
   if (pricing.enrichedSamples.some((sample) => Number(sample.estimatedAmount || 0) <= 0)) {
@@ -146,7 +145,7 @@ const createRequest = asyncHandler(async (req, res) => {
   const sampleDocs = [];
   for (let index = 0; index < pricing.enrichedSamples.length; index += 1) {
     const sample = pricing.enrichedSamples[index];
-    const sampleId = await buildSampleIdFromSeries(sampleSeries, String.fromCharCode(65 + index));
+    const sampleId = await generateSampleId();
 
     sampleDocs.push({
       request: request._id,
@@ -181,11 +180,15 @@ const createRequest = asyncHandler(async (req, res) => {
   const createdSamples = await Sample.find({ request: request._id }).lean();
 
   try {
-    await sendRequestCreatedEmails({
+    const mailResult = await sendRequestCreatedEmails({
       request,
       samples: createdSamples,
       payment,
     });
+
+    if (mailResult?.failedCount) {
+      console.error("Request created email partially failed:", mailResult.results);
+    }
   } catch (mailError) {
     console.error("Request created email failed:", mailError);
   }
