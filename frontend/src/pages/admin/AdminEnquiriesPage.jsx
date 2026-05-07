@@ -3,12 +3,27 @@ import { apiFetch } from "../../api/client";
 import { useAuth } from "../../contexts/AuthContext";
 import { formatDate } from "../../utils/formatters";
 
-const statusStyles = {
-  pending: "bg-amber-50 text-amber-700 border-amber-200",
-  sent: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  partial: "bg-sky-50 text-sky-700 border-sky-200",
-  failed: "bg-rose-50 text-rose-700 border-rose-200",
-  not_configured: "bg-slate-100 text-slate-600 border-slate-200",
+const emailStatusMeta = {
+  pending: {
+    label: "Pending",
+    classes: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  sent: {
+    label: "Email Sent",
+    classes: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  partial: {
+    label: "Partial Send",
+    classes: "bg-sky-50 text-sky-700 border-sky-200",
+  },
+  failed: {
+    label: "Email Failed",
+    classes: "bg-rose-50 text-rose-700 border-rose-200",
+  },
+  not_configured: {
+    label: "Not Configured",
+    classes: "bg-slate-100 text-slate-600 border-slate-200",
+  },
 };
 
 function AdminEnquiriesPage() {
@@ -52,6 +67,10 @@ function AdminEnquiriesPage() {
           </thead>
           <tbody>
             {enquiries.map((enquiry) => (
+              (() => {
+                const status = emailStatusMeta[enquiry.emailStatus] || emailStatusMeta.pending;
+
+                return (
               <tr key={enquiry._id} className="border-t border-slate-100 align-top">
                 <td className="py-4 whitespace-nowrap">{formatDate(enquiry.createdAt)}</td>
                 <td className="py-4 font-medium text-slate-800">{enquiry.name}</td>
@@ -59,18 +78,17 @@ function AdminEnquiriesPage() {
                 <td className="py-4 whitespace-nowrap">{enquiry.email}</td>
                 <td className="py-4 min-w-[280px] max-w-[420px] whitespace-pre-wrap text-slate-700">{enquiry.message}</td>
                 <td className="py-4">
-                  <span
-                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize ${
-                      statusStyles[enquiry.emailStatus] || statusStyles.pending
-                    }`}
-                  >
-                    {(enquiry.emailStatus || "pending").replace("_", " ")}
+                  <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${status.classes}`}>
+                    <span className="h-2 w-2 rounded-full bg-current opacity-70" />
+                    {status.label}
                   </span>
                 </td>
                 <td className="py-4 max-w-[260px] whitespace-pre-wrap text-slate-500">
                   {enquiry.emailError || "No error"}
                 </td>
               </tr>
+                );
+              })()
             ))}
           </tbody>
         </table>
