@@ -19,6 +19,7 @@ router.post("/rates", admin.createRate);
 router.patch("/rates/:id", admin.updateRate);
 
 router.get("/users", admin.listUsers);
+router.get("/enquiries", admin.listEnquiries);
 router.patch("/users/:id/status", admin.updateUserStatus);
 
 router.get("/settings", admin.getSettings);

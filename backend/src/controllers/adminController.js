@@ -8,6 +8,7 @@ const WebsiteSettings = require("../models/WebsiteSettings");
 const TestingRequest = require("../models/TestingRequest");
 const Sample = require("../models/Sample");
 const Payment = require("../models/Payment");
+const ContactEnquiry = require("../models/ContactEnquiry");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const slugify = require("../utils/slugify");
@@ -302,6 +303,11 @@ const listUsers = asyncHandler(async (_req, res) => {
   res.json({ success: true, users });
 });
 
+const listEnquiries = asyncHandler(async (_req, res) => {
+  const enquiries = await ContactEnquiry.find().sort({ createdAt: -1 }).lean();
+  res.json({ success: true, enquiries });
+});
+
 const updateUserStatus = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
@@ -452,6 +458,7 @@ module.exports = {
   createRate,
   updateRate,
   listUsers,
+  listEnquiries,
   updateUserStatus,
   getSettings,
   updateSettings,

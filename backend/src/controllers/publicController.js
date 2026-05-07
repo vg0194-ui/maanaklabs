@@ -4,6 +4,7 @@ const WebsiteSettings = require("../models/WebsiteSettings");
 const Blog = require("../models/Blog");
 const Report = require("../models/Report");
 const TestingRequest = require("../models/TestingRequest");
+const ContactEnquiry = require("../models/ContactEnquiry");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const { generatePackingGuidePdf, generateSampleSizeGuidePdf } = require("../services/pdfService");
@@ -164,9 +165,13 @@ const submitContactEnquiry = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Name, email, mobile, and message are required");
   }
 
-  if (!isMailConfigured()) {
-    throw new ApiError(503, "Email service is not configured yet");
-  }
+  const enquiry = await ContactEnquiry.create({
+    name,
+    email,
+    mobile,
+    message,
+    emailStatus: isMailConfigured() ? "pending" : "not_configured",
+  });
 
   try {
     const mailResult = await sendContactEnquiryEmails({
@@ -176,17 +181,28 @@ const submitContactEnquiry = asyncHandler(async (req, res) => {
       message,
     });
 
+    const emailStatus = mailResult?.failedCount ? "partial" : "sent";
+    await ContactEnquiry.findByIdAndUpdate(enquiry._id, {
+      emailStatus,
+      emailError: "",
+      emailResults: mailResult?.results || [],
+    });
+
     if (mailResult?.failedCount) {
       console.warn("Contact enquiry acknowledgement partially failed:", mailResult.results);
     }
   } catch (mailError) {
     console.error("Contact enquiry email failed:", mailError?.details || mailError);
-    throw new ApiError(502, "Unable to send enquiry email right now. Please try again in a few minutes.");
+    await ContactEnquiry.findByIdAndUpdate(enquiry._id, {
+      emailStatus: "failed",
+      emailError: mailError?.message || "Unable to send enquiry email",
+      emailResults: Array.isArray(mailError?.details) ? mailError.details : [],
+    });
   }
 
   res.status(201).json({
     success: true,
-    message: "Your enquiry has been sent successfully.",
+    message: "Your enquiry has been submitted successfully. Our team will review it shortly.",
   });
 });
 
