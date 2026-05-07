@@ -25,6 +25,7 @@ import AdminRequestsPage from "./pages/admin/AdminRequestsPage";
 import AdminServicesPage from "./pages/admin/AdminServicesPage";
 import AdminRatesPage from "./pages/admin/AdminRatesPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminEnquiriesPage from "./pages/admin/AdminEnquiriesPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
 
@@ -75,6 +76,7 @@ function App() {
         <Route path="services" element={<AdminServicesPage />} />
         <Route path="rates" element={<AdminRatesPage />} />
         <Route path="users" element={<AdminUsersPage />} />
+        <Route path="enquiries" element={<AdminEnquiriesPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="blogs" element={<AdminBlogsPage />} />
       </Route>
@@ -85,4 +87,3 @@ function App() {
 }
 
 export default App;
-

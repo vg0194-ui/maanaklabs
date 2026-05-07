@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { FileText, FlaskConical, LayoutDashboard, LogOut, ReceiptIndianRupee, Settings, Users } from "lucide-react";
+import { FileText, FlaskConical, LayoutDashboard, LogOut, Mail, ReceiptIndianRupee, Settings, Users } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import BrandLogo from "../public/BrandLogo";
 
@@ -15,6 +15,7 @@ const adminLinks = [
   { label: "Services", to: "/admin/services", icon: FlaskConical },
   { label: "Rates", to: "/admin/rates", icon: ReceiptIndianRupee },
   { label: "Users", to: "/admin/users", icon: Users },
+  { label: "Enquiries", to: "/admin/enquiries", icon: Mail },
   { label: "Settings", to: "/admin/settings", icon: Settings },
   { label: "Blogs", to: "/admin/blogs", icon: FileText },
 ];
