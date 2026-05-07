@@ -2,7 +2,7 @@ export const sampleGuideSteps = [
   {
     number: "01",
     title: "Withdraw Representative Sample",
-    image: "/images/sample-withdrawal.jpg",
+    image: "/images/step-01-withdraw.png",
     english: [
       "Take seed sample from different bags or points of the lot.",
       "Mix properly to make one representative sample.",
@@ -14,7 +14,7 @@ export const sampleGuideSteps = [
   {
     number: "02",
     title: "Fill Sample Details Online",
-    image: "/images/online-request.jpg",
+    image: "/images/step-02-online.png",
     english: [
       "Login to Maanak Labs.",
       "Add crop, variety, lot number, lot quantity, seed class, and required tests.",
@@ -25,7 +25,7 @@ export const sampleGuideSteps = [
   {
     number: "03",
     title: "Print Sample Slip",
-    image: "/images/print-sample-slip.jpg",
+    image: "/images/step-03-print.png",
     english: [
       "After payment, download PDF.",
       "Print sample slip generated for each sample.",
@@ -36,7 +36,7 @@ export const sampleGuideSteps = [
   {
     number: "04",
     title: "Pack Each Sample Separately",
-    image: "/images/pack-sample-bag.jpg",
+    image: "/images/step-04-pack.png",
     english: [
       "Put each seed sample in a clean packet or bag.",
       "Insert or paste the matching Sample Slip with that sample.",
@@ -47,7 +47,7 @@ export const sampleGuideSteps = [
   {
     number: "05",
     title: "Put All Sample Packets in One Master Bag",
-    image: "/images/master-bag.jpg",
+    image: "/images/step-05-master-bag.png",
     english: [
       "If sending multiple samples, keep all individual packets inside one master bag or carton.",
       "Keep the printed Request Letter inside the master bag.",
@@ -58,7 +58,7 @@ export const sampleGuideSteps = [
   {
     number: "06",
     title: "Paste Lab Address Label on Master Bag",
-    image: "/images/address-label.jpg",
+    image: "/images/step-06-address-label.png",
     english: [
       "Paste the Maanak Labs address label on the outside of the master bag or carton.",
       "Address label should be clearly visible.",
@@ -69,7 +69,7 @@ export const sampleGuideSteps = [
   {
     number: "07",
     title: "Send by Courier / Transport",
-    image: "/images/courier-dispatch.jpg",
+    image: "/images/step-07-dispatch.png",
     english: [
       "Send the sample by courier, parcel, transport, or personal delivery.",
       "Keep courier receipt or tracking number safely.",
@@ -79,7 +79,7 @@ export const sampleGuideSteps = [
   {
     number: "08",
     title: "Track Request Status Online",
-    image: "/images/status-tracking.jpg",
+    image: "/images/step-08-track.png",
     english: [
       "Login and check status updates online.",
       "Sample Awaited → Sample Received → Under Testing → Report Generated → Completed",
@@ -90,4 +90,3 @@ export const sampleGuideSteps = [
 
 export const sampleGuideWarning =
   "Incorrect packing, missing sample slip, or unmatched Sample ID may delay testing.";
-

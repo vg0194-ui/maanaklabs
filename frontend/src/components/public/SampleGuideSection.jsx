@@ -33,8 +33,10 @@ function SampleGuideSection({ compact = false, showTitle = true }) {
 
         <div className={`mt-10 grid gap-6 ${compact ? "lg:grid-cols-2" : "md:grid-cols-2 xl:grid-cols-4"}`}>
           {sampleGuideSteps.map((step) => (
-            <article key={step.number} className="panel overflow-hidden">
-              <img src={step.image} alt={step.title} className="h-44 w-full object-cover" />
+            <article key={step.number} className="panel overflow-hidden border border-slate-200 bg-white">
+              <div className="bg-slate-50 p-3">
+                <img src={step.image} alt={step.title} className="h-auto w-full rounded-[1.25rem] border border-slate-100 object-contain shadow-soft" />
+              </div>
               <div className="p-6">
                 <div className="inline-flex rounded-full bg-brand-mist px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-brand-green">
                   Step {step.number}
@@ -58,4 +60,3 @@ function SampleGuideSection({ compact = false, showTitle = true }) {
 }
 
 export default SampleGuideSection;
-
