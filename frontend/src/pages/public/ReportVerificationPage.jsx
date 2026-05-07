@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SectionHeader from "../../components/public/SectionHeader";
+import Seo from "../../components/Seo";
 import { apiFetch } from "../../api/client";
 import { formatDate } from "../../utils/formatters";
 
@@ -27,6 +28,13 @@ function ReportVerificationPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title="Report Verification"
+        description="Verify the authenticity of a Maanak Labs final report using the report verification code provided with the PDF."
+        canonicalPath="/report-verification"
+        noindex
+        keywords="report verification, seed testing report verification, verify lab report"
+      />
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Report verification"

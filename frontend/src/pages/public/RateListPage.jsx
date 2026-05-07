@@ -1,4 +1,5 @@
 import SectionHeader from "../../components/public/SectionHeader";
+import Seo from "../../components/Seo";
 import { useSiteData } from "../../contexts/SiteDataContext";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 
@@ -8,6 +9,12 @@ function RateListPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title="Seed Testing Rate List"
+        description="View the active Maanak Labs testing rate list with service-wise charges, GST percentage, and effective dates for public reference."
+        canonicalPath="/rate-list"
+        keywords="seed testing rate list, seed lab charges, germination test charges, moisture test charges"
+      />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Rate list"

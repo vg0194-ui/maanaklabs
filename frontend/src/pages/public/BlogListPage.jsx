@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import SectionHeader from "../../components/public/SectionHeader";
+import Seo from "../../components/Seo";
 import { useSiteData } from "../../contexts/SiteDataContext";
 
 function BlogListPage() {
@@ -7,6 +8,13 @@ function BlogListPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title="Knowledge Center"
+        description="Read Maanak Labs articles and seed quality guidance for germination, storage decisions, sample handling, and practical testing awareness."
+        canonicalPath="/blogs"
+        image="/images/maanak-germination-tray-2.jpeg"
+        keywords="seed quality blog, germination guidance, seed storage guidance, agricultural quality knowledge center"
+      />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Knowledge center"
@@ -33,4 +41,3 @@ function BlogListPage() {
 }
 
 export default BlogListPage;
-

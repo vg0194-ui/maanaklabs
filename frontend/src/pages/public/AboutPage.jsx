@@ -1,4 +1,5 @@
 import SectionHeader from "../../components/public/SectionHeader";
+import Seo from "../../components/Seo";
 import { useSiteData } from "../../contexts/SiteDataContext";
 
 const profileCards = [
@@ -25,6 +26,13 @@ function AboutPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title="About Maanak Labs"
+        description="Learn about Maanak Labs, its mission, vision, core values, and seed testing support for seed companies, processors, dealers, and institutional buyers."
+        canonicalPath="/about"
+        image="/images/maanak-lab-interior.jpeg"
+        keywords="about Maanak Labs, seed testing lab mission, seed testing lab vision, agricultural testing laboratory"
+      />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="About Maanak Labs"

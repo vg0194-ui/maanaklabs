@@ -1,4 +1,5 @@
 import SectionHeader from "../../components/public/SectionHeader";
+import Seo from "../../components/Seo";
 import ServiceCard from "../../components/public/ServiceCard";
 import { useSiteData } from "../../contexts/SiteDataContext";
 
@@ -8,6 +9,13 @@ function ServicesPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title="Seed Testing Services"
+        description="Browse Maanak Labs seed testing services including germination, physical purity, moisture, vigour, grow out, genetic purity, and seed health testing."
+        canonicalPath="/services"
+        image="/images/maanak-germination-tray-1.jpeg"
+        keywords="seed testing services, germination testing, physical purity testing, seed moisture testing, grow out test, seed health test"
+      />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Services"

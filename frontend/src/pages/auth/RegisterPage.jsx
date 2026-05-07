@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import Seo from "../../components/Seo";
 import BrandLogo from "../../components/public/BrandLogo";
 
 const initialForm = {
@@ -51,6 +52,12 @@ function RegisterPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title="Register"
+        description="Register on Maanak Labs to submit seed testing requests, download sample documents, and track progress online."
+        canonicalPath="/register"
+        noindex
+      />
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className="panel p-8">
           <div className="mb-6 flex justify-center">

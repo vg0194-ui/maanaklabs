@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import Seo from "../../components/Seo";
 import SectionHeader from "../../components/public/SectionHeader";
 import { useSiteData } from "../../contexts/SiteDataContext";
 
@@ -20,6 +21,13 @@ function ServiceDetailPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title={service.name}
+        description={service.description || `${service.name} at Maanak Labs with sample quantity guidance and expected testing timelines.`}
+        canonicalPath={`/services/${service.slug}`}
+        image="/images/maanak-germination-tray-2.jpeg"
+        keywords={`${service.name}, seed testing service, ${service.crop || "seed lab testing"}`}
+      />
       <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr,360px] lg:px-8">
         <div className="panel p-8">
           <SectionHeader eyebrow="Service detail" title={service.name} description={service.description} />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import Seo from "../../components/Seo";
 import BrandLogo from "../../components/public/BrandLogo";
 
 function LoginPage() {
@@ -29,6 +30,12 @@ function LoginPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title="Login"
+        description="Login to Maanak Labs to create seed testing requests, track reports, and manage laboratory workflows."
+        canonicalPath="/login"
+        noindex
+      />
       <div className="mx-auto max-w-md px-4 sm:px-6 lg:px-8">
         <div className="panel p-8">
           <div className="mb-6 flex justify-center">

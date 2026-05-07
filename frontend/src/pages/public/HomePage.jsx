@@ -1,6 +1,7 @@
 import { CheckCircle2, FileText, FlaskConical, ShieldCheck, Sprout, Target } from "lucide-react";
 import { Link } from "react-router-dom";
 import HeroSection from "../../components/public/HeroSection";
+import Seo from "../../components/Seo";
 import SectionHeader from "../../components/public/SectionHeader";
 import ServiceCard from "../../components/public/ServiceCard";
 import SampleGuideSection from "../../components/public/SampleGuideSection";
@@ -64,6 +65,39 @@ function HomePage() {
 
   return (
     <>
+      <Seo
+        title="Seed Testing Laboratory"
+        description="Maanak Labs provides seed testing services for germination, purity, moisture, vigour, seed health, and lot quality decisions for seed companies and agricultural stakeholders."
+        canonicalPath="/"
+        image="/images/maanak-lab-interior.jpeg"
+        keywords="seed testing laboratory, germination test, purity test, moisture test, seed vigour test, seed health test, Jaipur seed lab, Rajasthan seed testing"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Maanak Labs",
+              url: "https://maanaklabs.com",
+              logo: "https://maanaklabs.com/images/maanak-labs-logo.png",
+              email: "info@maanaklabs.com",
+              telephone: "+91 98765 43210",
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Entorno Greens Campus, Akhepura, Delhi-Jaipur 200ft Bypass, VKI",
+                addressLocality: "Jaipur",
+                addressRegion: "Rajasthan",
+                postalCode: "302013",
+                addressCountry: "IN",
+              },
+            },
+            {
+              "@type": "WebSite",
+              name: "Maanak Labs",
+              url: "https://maanaklabs.com",
+            },
+          ],
+        }}
+      />
       <HeroSection />
 
       <section className="py-16">

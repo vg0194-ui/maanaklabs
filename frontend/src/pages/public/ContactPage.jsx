@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Mail, MapPin, Phone } from "lucide-react";
 import SectionHeader from "../../components/public/SectionHeader";
+import Seo from "../../components/Seo";
 import { useSiteData } from "../../contexts/SiteDataContext";
 import { apiFetch } from "../../api/client";
 
@@ -107,6 +108,25 @@ function ContactPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title="Contact Maanak Labs"
+        description="Contact Maanak Labs for seed sample dispatch, testing support, laboratory coordination, and quick enquiries."
+        canonicalPath="/contact"
+        keywords="contact seed testing lab, Jaipur seed lab contact, sample dispatch address, seed testing enquiry"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          name: "Contact Maanak Labs",
+          url: "https://maanaklabs.com/contact",
+          mainEntity: {
+            "@type": "Organization",
+            name: "Maanak Labs",
+            email: contactDetails.email,
+            telephone: contactDetails.mobile,
+            address: contactDetails.address,
+          },
+        }}
+      />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Contact us"

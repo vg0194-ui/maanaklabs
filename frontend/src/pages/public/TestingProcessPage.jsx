@@ -1,4 +1,5 @@
 import SectionHeader from "../../components/public/SectionHeader";
+import Seo from "../../components/Seo";
 
 const steps = [
   ["Create Request", "Register or login, enter crop, variety, lot details, sample quantity, and the tests required for each sample."],
@@ -14,6 +15,13 @@ const steps = [
 function TestingProcessPage() {
   return (
     <section className="py-16">
+      <Seo
+        title="Testing Process"
+        description="See the Maanak Labs seed testing process from online request and payment through sample dispatch, laboratory testing, status tracking, and final reporting."
+        canonicalPath="/testing-process"
+        image="/images/maanak-lab-interior.jpeg"
+        keywords="seed testing process, sample dispatch process, laboratory workflow, request to report process"
+      />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Testing process"

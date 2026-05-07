@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch } from "../../api/client";
+import Seo from "../../components/Seo";
 import SectionHeader from "../../components/public/SectionHeader";
 
 function BlogDetailPage() {
@@ -38,6 +39,28 @@ function BlogDetailPage() {
 
   return (
     <section className="py-16">
+      <Seo
+        title={blog.title}
+        description={blog.excerpt}
+        canonicalPath={`/blogs/${blog.slug}`}
+        image={blog.coverImage || "/images/maanak-germination-tray-2.jpeg"}
+        keywords={`${blog.title}, seed quality article, Maanak Labs blog`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: blog.title,
+          description: blog.excerpt,
+          image: blog.coverImage ? `https://maanaklabs.com${blog.coverImage}` : "https://maanaklabs.com/images/maanak-germination-tray-2.jpeg",
+          publisher: {
+            "@type": "Organization",
+            name: "Maanak Labs",
+            logo: {
+              "@type": "ImageObject",
+              url: "https://maanaklabs.com/images/maanak-labs-logo.png",
+            },
+          },
+        }}
+      />
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <SectionHeader eyebrow="Knowledge center" title={blog.title} description={blog.excerpt} />
         <article className="panel mt-10 overflow-hidden">
