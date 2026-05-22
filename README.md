@@ -203,6 +203,16 @@ After payment, users can download a branded A4 PDF bundle containing:
 
 ## Deployment
 
+### Azure Recommended Setup
+
+- Frontend: **Azure Static Web Apps**
+- Backend: **Azure App Service (Linux, Node.js)**
+- Database: **MongoDB Atlas**
+
+See the full Azure migration guide here:
+
+- [AZURE_DEPLOYMENT.md](C:/Users/vg019/Documents/Codex/2026-04-29-build-a-professional-full-stack-website/AZURE_DEPLOYMENT.md)
+
 ### Frontend on Vercel
 
 1. Import the repository in Vercel.
