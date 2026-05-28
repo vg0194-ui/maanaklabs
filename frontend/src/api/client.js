@@ -1,4 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+function getDefaultApiUrl() {
+  if (typeof window !== "undefined" && window.location.hostname.endsWith("maanaklabs.com")) {
+    return "https://api.maanaklabs.com/api";
+  }
+
+  return "http://localhost:5000/api";
+}
+
+const API_URL = import.meta.env.VITE_API_URL || getDefaultApiUrl();
 
 function triggerBrowserDownload(url, fileName) {
   const anchor = document.createElement("a");
