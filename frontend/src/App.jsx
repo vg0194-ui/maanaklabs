@@ -28,61 +28,65 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminEnquiriesPage from "./pages/admin/AdminEnquiriesPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
+import GoogleAnalytics from "./components/GoogleAnalytics";
 
 function App() {
   return (
-    <Routes>
-      <Route element={<SiteLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/services" element={<ServicesPage />} />
-        <Route path="/services/:slug" element={<ServiceDetailPage />} />
-        <Route path="/testing-process" element={<TestingProcessPage />} />
-        <Route path="/rate-list" element={<RateListPage />} />
-        <Route path="/sample-guidelines" element={<SampleGuidelinesPage />} />
-        <Route path="/report-verification" element={<ReportVerificationPage />} />
-        <Route path="/blogs" element={<BlogListPage />} />
-        <Route path="/blogs/:slug" element={<BlogDetailPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
+    <>
+      <GoogleAnalytics />
+      <Routes>
+        <Route element={<SiteLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/services/:slug" element={<ServiceDetailPage />} />
+          <Route path="/testing-process" element={<TestingProcessPage />} />
+          <Route path="/rate-list" element={<RateListPage />} />
+          <Route path="/sample-guidelines" element={<SampleGuidelinesPage />} />
+          <Route path="/report-verification" element={<ReportVerificationPage />} />
+          <Route path="/blogs" element={<BlogListPage />} />
+          <Route path="/blogs/:slug" element={<BlogDetailPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
 
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute roles={["user"]}>
-            <DashboardShell variant="user" />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<UserDashboardPage />} />
-        <Route path="new-request" element={<NewRequestPage />} />
-        <Route path="requests" element={<MyRequestsPage />} />
-        <Route path="payment-success/:requestId" element={<PaymentSuccessPage />} />
-        <Route path="requests/:requestId/documents" element={<PdfDownloadPage />} />
-      </Route>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute roles={["user"]}>
+              <DashboardShell variant="user" />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<UserDashboardPage />} />
+          <Route path="new-request" element={<NewRequestPage />} />
+          <Route path="requests" element={<MyRequestsPage />} />
+          <Route path="payment-success/:requestId" element={<PaymentSuccessPage />} />
+          <Route path="requests/:requestId/documents" element={<PdfDownloadPage />} />
+        </Route>
 
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute roles={["admin"]}>
-            <DashboardShell variant="admin" />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<AdminDashboardPage />} />
-        <Route path="requests" element={<AdminRequestsPage />} />
-        <Route path="services" element={<AdminServicesPage />} />
-        <Route path="rates" element={<AdminRatesPage />} />
-        <Route path="users" element={<AdminUsersPage />} />
-        <Route path="enquiries" element={<AdminEnquiriesPage />} />
-        <Route path="settings" element={<AdminSettingsPage />} />
-        <Route path="blogs" element={<AdminBlogsPage />} />
-      </Route>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardShell variant="admin" />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="requests" element={<AdminRequestsPage />} />
+          <Route path="services" element={<AdminServicesPage />} />
+          <Route path="rates" element={<AdminRatesPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="enquiries" element={<AdminEnquiriesPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
+          <Route path="blogs" element={<AdminBlogsPage />} />
+        </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 

@@ -59,12 +59,19 @@ Add frontend environment variable in Azure Static Web Apps:
 
 ```text
 VITE_API_URL=https://api.maanaklabs.com/api
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
 If you are using the auto-generated GitHub Action from Azure, make sure the deployment secret maps to:
 
 ```text
 AZURE_STATIC_WEB_APPS_API_TOKEN_MAANAK
+```
+
+Also add this GitHub Actions secret for Google Analytics:
+
+```text
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
 ## Azure Backend Setup
